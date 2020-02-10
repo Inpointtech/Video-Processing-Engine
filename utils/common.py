@@ -1,7 +1,9 @@
 """Utility for performing common functions."""
 
 import os
+import platform
 import socket
+import subprocess
 from datetime import datetime
 from typing import List, Optional, Union
 
@@ -25,3 +27,25 @@ def check_internet(timeout: Optional[Union[float, int]] = 10.0) -> bool:
 def now() -> datetime:
   """Return current time without microseconds."""
   return datetime.now().replace(microsecond=0)
+
+
+def toast(title: str, message: str) -> None:
+  """Display toast message.
+
+  Displays toast message on Darwin based system and prints toast on
+  Windows machines.
+
+  Args:
+    title: Title message of the toast.
+    message: Message to be displayed.
+
+  Note:
+    This function needs to be used only for the purpose of debugging
+    code. Kindly use sparingly.
+  
+  TODO(xames3): Add support for Windows based notifications.
+  """
+  if platform == 'nt':
+    print(f'{title}:\n{message}')
+  else:
+    subprocess.call(['notify-send', title, message])
