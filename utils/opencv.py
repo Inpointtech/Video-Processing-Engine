@@ -71,35 +71,34 @@ def draw_box_with_tuple(frame: np.ndarray,
                         end_xy: Tuple,
                         color: Optional[List] = yellow,
                         thickness: Optional[int] = 1) -> None:
-  """Draw bounding box around the detected faces.
+  """Draw bounding box using the numpy tuple.
 
-  Bounding box adjusts automatically as per the size of faces in view.
+  Draws the bounding box around the detection using tuple of numpy
+  coordinates.
 
   Args:
     frame: Numpy array of the image frame.
     start_xy: Tuple of top left coordinates.
     end_xy: Tuple of bottom right coordinates.
-    color: Bounding box color (default: yellow)
+    color: Bounding box (default: yellow) color.
     thickness: Thickness (default: 1) of the bounding box.
 
   Note:
-    This method is only applicable to the faces detected by CaffeModel.
-    For faces detected by Haar cascade, use 'detect_motion()'.
+    This method can be used for drawing the bounding boxes around
+    objects whose coordinates are derived from a Machine Learning based
+    model. For Haar based detections, use `draw_box_with_coords()`.
   """
   return cv2.rectangle(frame, start_xy, end_xy, color, thickness)
 
 
-def detect_motion(frame: np.ndarray,
-                  x: Union[int],
-                  y: Union[int],
-                  w: Union[int],
-                  h: Union[int],
-                  color: Optional[List] = green,
-                  thickness: Optional[int] = 1) -> None:
-  """Draw bounding box around the detected objects.
+def draw_box_with_coords(frame: np.ndarray, x: Union[int], y: Union[int],
+                         w: Union[int], h: Union[int],
+                         color: Optional[List] = green,
+                         thickness: Optional[int] = 1) -> None:
+  """Draw bounding box using individual coords.
 
-  Bounding box adjusts automatically as per the size of object(s) in the
-  view.
+  Draws a bounding box around the detected object using all 4 available
+  coordinates. This function is ideal to use with Haar based detections.
 
   Args:
     frame: Numpy array of the image frame.
@@ -107,7 +106,7 @@ def detect_motion(frame: np.ndarray,
     y: Top left Y-position of the detected object.
     w: Bottom right X-position of the detected object.
     w: Bottom right Y-position of the detected object.
-    color: Bounding box color (default: green)
+    color: Bounding box (default: green) color.
     thickness: Thickness (default: 1) of the bounding box.
   """
   return cv2.rectangle(frame, (x, y), (x + w, y + h), color, thickness)
