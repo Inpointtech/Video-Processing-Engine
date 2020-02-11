@@ -1,7 +1,6 @@
 """Utility for performing common functions."""
 
 import os
-import platform
 import socket
 import subprocess
 from datetime import datetime
@@ -45,7 +44,7 @@ def toast(title: str, message: str) -> None:
   
   TODO(xames3): Add support for Windows based notifications.
   """
-  if platform == 'nt':
+  if os.name == 'nt':
     print(f'{title}:\n{message}')
   else:
     subprocess.call(['notify-send', title, message])
