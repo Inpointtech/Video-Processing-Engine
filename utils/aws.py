@@ -1,10 +1,12 @@
 """Utility for working with AWS using boto3."""
 
 import os
-from typing import Optional
+from typing import List, Optional
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
+
+from video_processing_engine.utils.paths import downloads
 
 
 def create_s3_bucket(access_key: str,
@@ -60,7 +62,7 @@ def upload_to_bucket(access_key: str,
   Args:
     access_key: AWS access key.
     secret_key: AWS saccess_key: str,
-    bucket_name: Bucket to upload.
+    bucket_name: Bucket to upload to.
     filename: Local file to upload.
     s3_name: Name (default: None) for the uploaded file.
 
@@ -109,3 +111,78 @@ def generate_s3_url(bucket_name: str, s3_name: str) -> str:
   """
   s3_name = s3_name.replace(' ', '+')
   return f'https://{bucket_name}.s3.amazonaws.com/{s3_name}'
+
+
+def check_file(access_key: str,
+               secret_key: str,
+               s3_url: str,
+               bucket_name: Optional[str] = None) -> Optional[List]:
+  """Return boolean value depending on file's existence."""
+  try:
+    s3 = boto3.client('s3',
+                      aws_access_key_id=access_key,
+                      aws_secret_access_key=secret_key)
+  except (ClientError, NoCredentialsError):
+    return None
+  else:
+    if bucket_name is None:
+      bucket_name = s3_url.split('//')[1].split('.')[0]
+    s3_file = s3_url.split('.amazonaws.com/')[1]
+    return ['Contents' in s3.list_objects(Bucket=bucket_name, Prefix=s3_file),
+            bucket_name,
+            s3_file]
+
+
+def access_file(access_key: str,
+                secret_key: str,
+                s3_url: str,
+                bucket_name: Optional[str] = None) -> None:
+  """Access file from S3 bucket.
+
+  Access and download file from S3 bucket.
+
+  Args:
+    access_key: AWS access key.
+    secret_key: AWS saccess_key: str,
+    s3_url: Public url for the file.
+    bucket_name: Bucket to search and download from.
+
+  Note:
+    This function ensures the file exists on the S3 bucket and then
+    downloads the same. If the file doesn't exist on S3, it'll return
+    None.
+  """
+  try:
+    s3 = boto3.client('s3',
+                      aws_access_key_id=access_key,
+                      aws_secret_access_key=secret_key)
+  except (ClientError, NoCredentialsError):
+    return None
+  else:
+    [*status, bucket, file] = check_file(access_key, secret_key,
+                                         s3_url, bucket_name)
+    if status[0]:
+      s3.download_file(bucket, file, save_file(bucket, file))
+    else:
+      return None
+
+
+def save_file(bucket_name: str, filename: str) -> str:
+  """Save S3 file.
+
+  Create a directory with bucket name and save the file in it.
+
+  Args:
+   bucket_name: Bucket to search and download from.
+   filename: File to download and save.
+
+  Returns:
+    String path where the downloaded file needs to be saved.
+
+  Note:
+    If the `./downloads/` folder doesn't exists, it creates one and
+    proceeds further with it.
+  """
+  if not os.path.isdir(os.path.join(downloads, bucket_name)):
+    os.makedirs(os.path.join(downloads, bucket_name))
+  return os.path.join(os.path.join(downloads, bucket_name), filename)
