@@ -13,7 +13,7 @@ def confirm(question: str) -> bool:
   Args:
     question: Question for yes-no options.
 
-  Note:
+  Notes:
     It is recommended to use this function by assigning it to a
     variable & then the variable should be used in an if-else condition
     to invoke the action.
@@ -30,7 +30,7 @@ def choose(question: str, **kwargs: Union[List, int, float, str]) -> str:
   Args:
     question: Question or Message presenting multiple options.
 
-  Note:
+  Notes:
     It is recommended to use this function when any one of the
     multiple options needs to be selected.
   """
@@ -39,7 +39,7 @@ def choose(question: str, **kwargs: Union[List, int, float, str]) -> str:
 
 def select_file(question: str, dir_name: str) -> str:
   """Provides list of files.
-  
+
   Provides option to select the file from a directory.
 
   Args:
@@ -62,7 +62,7 @@ def answer(question: str) -> Optional[str]:
   Args:
     question: Question that needs to be asked for expecting answer.
 
-  Note:
+  Notes:
     It is recommended to use this function while taking inputs.
   """
   # Asks question until it is responded with something.
@@ -86,7 +86,7 @@ def ask_numbers(question: str) -> float:
   Args:
     question: Question that needs to be asked for expecting answer.
 
-  Note:
+  Notes:
     It is recommended to use this function while taking inputs.
   """
   # Asks question until it is responded with something.
@@ -95,7 +95,7 @@ def ask_numbers(question: str) -> float:
     revert = float(text(question).ask())
     if revert == '' or revert < 0:
       option = confirm(
-          'No valid input received. Would you like to try that again?')
+        'No valid input received. Would you like to try that again?')
       # Asks the same question again if a no response is given.
       while option is False:
         return 0.0 if option else float(revert)
