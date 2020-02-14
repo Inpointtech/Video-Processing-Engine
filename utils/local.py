@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from video_processing_engine.utils.generate import hash_x
+from video_processing_engine.utils.generate import hash_x, hash_xa
 
 
 def get_file_name(path: str) -> str:
@@ -18,21 +18,18 @@ def get_directory_name(path: str) -> str:
   return os.path.join(os.path.dirname(path), get_file_name(path))
 
 
-def create_directory(path: str,
-                     retval: Optional[bool] = False) -> Optional[str]:
+def create_directory(path: str) -> str:
   """Create directory with filename and return its path.
 
   Args:
     path: Path where the directory needs to be created.
-    retval: Boolean value (default: False) to return directory path.
 
   Returns:
-    Directory path is retval argument is chosen True.
+    String directory path.
   """
   if not os.path.isdir(get_directory_name(path)):
     os.mkdir(get_directory_name(path))
-  if retval:
-    return get_directory_name(path)
+  return get_directory_name(path)
 
 
 def filename(path: str,
@@ -55,10 +52,28 @@ def filename(path: str,
 
 def create_copy(path: str) -> None:
   """Creates a copy of the video file."""
-  return shutil.copy(path, create_directory(path, True))
+  return shutil.copy(path, create_directory(path))
 
 
 def rename_file(original: str, rename: str) -> str:
   """Returns renamed file path."""
   os.rename(original, original.replace(Path(original).stem, rename))
   return original.replace(Path(original).stem, rename)
+
+
+def beta_filename(path: str,
+                  video_num: int,
+                  extension: Optional[str] = 'mp4') -> str:
+  """Creates a directory to store all files and return filename.
+
+  Args:
+    path: Path where the directory needs to be created.
+    video_num: Video number to append to the trimmed videos.
+    extension: Video file extension (default: mp4) to be used.
+
+  Returns:
+    Complete filename with the clip number and video extension.
+  """
+  create_directory(path)
+  return os.path.join(get_directory_name(path),
+                      f'{get_file_name(path)}{hash_xa(video_num)}.{extension}')
