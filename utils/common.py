@@ -4,7 +4,7 @@ import os
 import socket
 import subprocess
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from video_processing_engine.vars import dev
 
@@ -38,13 +38,36 @@ def toast(title: str, message: str) -> None:
     title: Title message of the toast.
     message: Message to be displayed.
 
-  Note:
+  Notes:
     This function needs to be used only for the purpose of debugging
     code. Kindly use sparingly.
-  
+
   TODO(xames3): Add support for Windows based notifications.
   """
   if os.name == 'nt':
     print(f'{title}:\n{message}')
   else:
     subprocess.call(['notify-send', title, message])
+
+
+def convert_bytes(number: Union[float, int]) -> Optional[str]:
+  """Converts the number into size denominations.
+
+  This function will convert bytes to KB, MB, GB, etc.
+
+  Args:
+    number: Number to be converted into file size.
+
+  Returns:
+    File size denomation.
+  """
+  for idx in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+    if number < 1024.0:
+      return '%3.1f %s' % (number, idx)
+    number /= 1024.0
+
+
+def file_size(path: str) -> Optional[str]:
+  """Return the file size."""
+  if os.path.isfile(path):
+    return convert_bytes(os.stat(path).st_size)
