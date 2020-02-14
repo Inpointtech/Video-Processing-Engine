@@ -13,7 +13,7 @@ def rescale(frame: np.ndarray,
             height: Optional[int] = None,
             interpolation: Optional[Any] = cv2.INTER_AREA) -> np.ndarray:
   """Rescale the frame.
-  
+
   Rescale the stream to a desirable size. This is required before
   performing the necessary operations.
 
@@ -22,7 +22,7 @@ def rescale(frame: np.ndarray,
     width: Width (default: None) to be rescaled to.
     height: Height (default: None) to be rescaled to.
     interpolation: Interpolation algorithm (default: INTER_AREA) to be
-                   used.
+                    used.
 
   Returns:
     Rescaled numpy array for the input frame.
@@ -83,7 +83,7 @@ def draw_box_with_tuple(frame: np.ndarray,
     color: Bounding box (default: yellow) color.
     thickness: Thickness (default: 1) of the bounding box.
 
-  Note:
+  Notes:
     This method can be used for drawing the bounding boxes around
     objects whose coordinates are derived from a Machine Learning based
     model. For Haar based detections, use `draw_box_with_coords()`.
@@ -110,3 +110,25 @@ def draw_box_with_coords(frame: np.ndarray, x: Union[int], y: Union[int],
     thickness: Thickness (default: 1) of the bounding box.
   """
   return cv2.rectangle(frame, (x, y), (x + w, y + h), color, thickness)
+
+
+def display_feed(frame: np.ndarray,
+                 name: Optional[str] = 'Stream feed',
+                 pos_x: Optional[int] = None,
+                 pos_y: Optional[int] = None) -> None:
+  """Displays the stream feed.
+
+  Displays the stream. Provides an option to display the stream at X, Y
+  position.
+
+  Args:
+    frame: Numpy array of the image frame.
+    name: Name for the display feed.
+    pos_x: X-position of the displayed feed.
+    pos_y: Y-position of the displayed feed.
+  """
+  cv2.namedWindow(name)
+  if pos_x == None or pos_y = None:
+    pos_x = pos_y = 0
+  cv2.moveWindow(name, pos_x, pos_y)
+  cv2.imshow(name, frame)
