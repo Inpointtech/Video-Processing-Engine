@@ -43,7 +43,7 @@ def create_s3_bucket(access_key: str,
                       aws_secret_access_key=secret_key,
                       region_name=region)
   except (ClientError, NoCredentialsError):
-      return False
+    return False
   else:
     location = {'LocationConstraint': region}
     s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
@@ -76,7 +76,8 @@ def upload_to_bucket(access_key: str,
     ...                  'test_secret_key',
     ...                  'test_bucket_name')
     ...                  'test_file_to_upload.py')
-    >>> True
+    True
+    >>>
     https://test_bucket_name.s3.amazonaws.com/test_file_to_upload.py
   """
   try:
@@ -99,13 +100,13 @@ def upload_to_bucket(access_key: str,
 
 def generate_s3_url(bucket_name: str, s3_name: str) -> str:
   """Generate public url.
-  
+
   Generates public url for accessing the uploaded file.
-  
+
   Args:
     bucket_name: Bucket where file exists.
     s3_name: File name whose URL is to be fetched.
-    
+
   Returns:
     String, public url.
   """
@@ -117,7 +118,20 @@ def check_file(access_key: str,
                secret_key: str,
                s3_url: str,
                bucket_name: Optional[str] = None) -> Optional[List]:
-  """Return boolean value depending on file's existence."""
+  """Return boolean status, bucket and filename.
+
+  Checks if the file is available on S3 bucke and returns bucket and
+  filename.
+
+  Args:
+    access_key: AWS access key.
+    secret_key: AWS saccess_key: str,
+    s3_url: Public url for the file.
+    bucket_name: Bucket to search and download from.
+
+  Returns:
+    List of boolean status, bucket and filename.
+  """
   try:
     s3 = boto3.client('s3',
                       aws_access_key_id=access_key,
@@ -147,7 +161,7 @@ def access_file(access_key: str,
     s3_url: Public url for the file.
     bucket_name: Bucket to search and download from.
 
-  Note:
+  Notes:
     This function ensures the file exists on the S3 bucket and then
     downloads the same. If the file doesn't exist on S3, it'll return
     None.
@@ -173,16 +187,29 @@ def save_file(bucket_name: str, filename: str) -> str:
   Create a directory with bucket name and save the file in it.
 
   Args:
-   bucket_name: Bucket to search and download from.
-   filename: File to download and save.
+    bucket_name: Bucket to search and download from.
+    filename: File to download and save.
 
   Returns:
     String path where the downloaded file needs to be saved.
 
-  Note:
+  Notes:
     If the `./downloads/` folder doesn't exists, it creates one and
     proceeds further with it.
   """
   if not os.path.isdir(os.path.join(downloads, bucket_name)):
     os.makedirs(os.path.join(downloads, bucket_name))
   return os.path.join(os.path.join(downloads, bucket_name), filename)
+
+
+# def create_glacier_vault(access_key: str,
+#                          secret_key: str,
+#                          vault_name: str,
+#                          region: Optional[str] = 'ap-south-1') -> bool:
+#   glacier = boto3.resource('glacier',
+#                            aws_access_key_id=access_key,
+#                            aws_secret_access_key=secret_key,
+#                            region_name=region)
+#   vault = glacier.Vault('account ID', 'cppsecvault1')
+#   response = vault.create()
+#   print(response)
