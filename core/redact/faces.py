@@ -25,7 +25,7 @@ def detect_faces(frame: np.ndarray,
     frame: Numpy array of the captured frame.
     confidence: Floating (default: 0.7) value for facial confidence.
 
-  Note:
+  Notes:
     Faces will only be detected if the confidence scores are above the
     `models.DETECTED_FACE_CONFIDENCE` value.
   """
@@ -44,12 +44,12 @@ def detect_faces(frame: np.ndarray,
   detected_faces = net.forward()
   # Loop over all the detected faces in the frame.
   for idx in range(detected_faces.shape[2]):
-      coords = detected_faces[0, 0, idx, 3:7] * np.array([width, height,
-                                                          width, height])
-      detected_confidence = detected_faces[0, 0, idx, 2]
-      # Draw a bounding box only if the detected faces have confidence
-      # score above DETECTED_FACE_CONFIDENCE threshold.
-      if detected_confidence < confidence:
-        continue
-      x0, y0, x1, y1 = coords.astype('int')
-      draw_box_with_tuple(frame, (x0, y0), (x1, y1))
+    coords = detected_faces[0, 0, idx, 3:7] * np.array([width, height,
+                                                        width, height])
+    detected_confidence = detected_faces[0, 0, idx, 2]
+    # Draw a bounding box only if the detected faces have confidence
+    # score above DETECTED_FACE_CONFIDENCE threshold.
+    if detected_confidence < confidence:
+      continue
+    x0, y0, x1, y1 = coords.astype('int')
+    draw_box_with_tuple(frame, (x0, y0), (x1, y1))
