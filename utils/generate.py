@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from typing import Optional, Union
 
-from video_processing_engine.utils.hasher import (hash_26, hash_52, hash_2704,
+from video_processing_engine.utils.hasher import (hash_26, hash_52, hash_521, hash_2704,
                                                   hash_area, hash_country)
 
 
@@ -27,6 +27,25 @@ def hash_xy(unique_id: Union[int, str]) -> Optional[str]:
   return hash_2704.get(int(unique_id), None)
 
 
+def hash_xa(unique_id: Union[int, str]) -> Optional[str]:
+  """Return hashed string code for single unique id from a - Z.
+
+  The unique id is fetched from the database and should range from 
+  01 to 52 values. Similar to `hash_xy_id()`, the hashing is done purely
+  on the ideology of python dictionaries.
+
+  Args:
+    unique_id: Integer or bX00010101001string value from database.
+
+  Returns:
+    Hashed string from hash_52 dictionary.
+
+  Notes:
+    Values greater than 52 will return None.
+  """
+  return hash_521.get(int(unique_id), None)
+
+
 def hash_x(unique_id: Union[int, str]) -> Optional[str]:
   """Return hashed string code for single unique id from a - Z.
 
@@ -35,7 +54,7 @@ def hash_x(unique_id: Union[int, str]) -> Optional[str]:
   on the ideology of python dictionaries.
 
   Args:
-    unique_id: Integer or string value from database.
+    unique_id: Integer or bX00010101001string value from database.
 
   Returns:
     Hashed string from hash_52 dictionary.
