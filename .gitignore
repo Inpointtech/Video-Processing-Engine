@@ -128,6 +128,7 @@ dmypy.json
 .vscode/
 tests/
 docs/
+demo/
 
 # Ignored on-device files
 /models/res10_300x300_ssd_iter_140000.caffemodel
