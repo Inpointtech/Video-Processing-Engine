@@ -2,7 +2,7 @@
 
 # Settings for the project
 PROJECT_NAME = 'video_processing_engine'
-PROJECT_LINK = 'https://github.com/xames3/mle/'
+PROJECT_LINK = 'https://github.com/akshayinpoint/video_processing_engine/'
 PROJECT_LICENSE = 'Apache 2.0'
 
 # This project adheres to Semantic Versioning Specification (SemVer)
@@ -34,3 +34,8 @@ CSV_TS_FORMAT = '%d_%m_%y'
 # This url is used for checking if the internet connection exists.
 PING_URL = 'www.google.com'
 PING_PORT = 80
+# This url is used for downloading files from Google Drive.
+DRIVE_DOWNLOAD_URL = 'https://docs.google.com/uc?export=download'
+
+# Chunk size
+CHUNK_SIZE = 32768
