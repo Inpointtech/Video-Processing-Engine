@@ -4,84 +4,70 @@ import os
 from datetime import datetime
 from typing import Optional, Union
 
-from video_processing_engine.utils.hasher import (hash_26, hash_52, hash_521, hash_2704,
-                                                  hash_area, hash_country)
+# TODO(xames3): Remove suppressed pyright warnings.
+# pyright: reportMissingTypeStubs=false
+from video_processing_engine.utils.hasher import (h_17k, h_26, h_676, h_area,
+                                                  h_country)
 
 
-def hash_xy(unique_id: Union[int, str]) -> Optional[str]:
-  """Return hashed string code for the double unique ids from aa - ZZ.
+def hash_a(unique_id: Union[int, str]) -> Optional[str]:
+  """Return hashed string code for single unique id from a - z.
 
   The unique id is fetched from the database and should range from 
-  0001 to 2704 values. The hashing is done purely on the ideology of
-  python dictionaries.
+  1 to 26 values.
+  This function is ideal for hashing hours & months in a timestamp.
 
   Args:
     unique_id: Integer or string value from database.
 
   Returns:
-    Hashed string from hash_2704 dictionary.
-
-  Notes:
-    Values greater than 2704 will return None.
-  """
-  return hash_2704.get(int(unique_id), None)
-
-
-def hash_xa(unique_id: Union[int, str]) -> Optional[str]:
-  """Return hashed string code for single unique id from a - Z.
-
-  The unique id is fetched from the database and should range from 
-  01 to 52 values. Similar to `hash_xy_id()`, the hashing is done purely
-  on the ideology of python dictionaries.
-
-  Args:
-    unique_id: Integer or bX00010101001string value from database.
-
-  Returns:
-    Hashed string from hash_52 dictionary.
-
-  Notes:
-    Values greater than 52 will return None.
-  """
-  return hash_521.get(int(unique_id), None)
-
-
-def hash_x(unique_id: Union[int, str]) -> Optional[str]:
-  """Return hashed string code for single unique id from a - Z.
-
-  The unique id is fetched from the database and should range from 
-  01 to 52 values. Similar to `hash_xy_id()`, the hashing is done purely
-  on the ideology of python dictionaries.
-
-  Args:
-    unique_id: Integer or bX00010101001string value from database.
-
-  Returns:
-    Hashed string from hash_52 dictionary.
-
-  Notes:
-    Values greater than 52 will return None.
-  """
-  return hash_52.get(int(unique_id), None)
-
-
-def hash_u(unique_id: Union[int, str]) -> Optional[str]:
-  """Return hashed string code for single unique id from A - Z.
-
-  The unique id is fetched from the database and should range from
-  01 to 26 values. Similar to `hash_x()`, the hashing is done purely
-  on thhash_xye ideology of python dictionaries.
-
-  Args:
-    unique_id: Integer or string value from database.
-
-  Returns:
-    Hashed string from hash_26 dictionary.
+    Hashed string from h_26 dictionary.
 
   Notes:
     Values greater than 26 will return None.
   """
-  return hash_26.get(int(unique_id), None)
+  return h_26.get(int(unique_id), None)
+
+
+def hash_aa(unique_id: Union[int, str]) -> Optional[str]:
+  """Return hashed string code for the double unique ids from aa - zz.
+
+  The unique id is fetched from the database and should range from 
+  1 to 676 values. The hashing is done purely on the ideology of
+  python dictionaries.
+  This function is suitable for hashing values in range of 00-99.
+
+  Args:
+    unique_id: Integer or string value from database.
+
+  Returns:
+    Hashed string from h_676 dictionary.
+
+  Notes:
+    Values greater than 676 will return None.
+  """
+  return h_676.get(int(unique_id), None)
+
+
+def hash_aaa(unique_id: Union[int, str]) -> Optional[str]:
+  """Return hashed string code for single unique id from aaa - zzz.
+
+  The unique id is fetched from the database and should range from 
+  1 to 17576 values. Similar to `hash_aa()`, the hashing is done
+  purely on the ideology of python dictionaries.
+  This function is ideal for covering almost all the possible ranges
+  for the customers.
+
+  Args:
+    unique_id: Integer or string value from database.
+
+  Returns:
+    Hashed string from h_17k dictionary.
+
+  Notes:
+    Values greater than 17576 will return None.
+  """
+  return h_17k.get(int(unique_id), None)
 
 
 def hash_area_code(area: str) -> Optional[str]:
@@ -101,14 +87,14 @@ def hash_area_code(area: str) -> Optional[str]:
     ValueError: If the value is not found.
   """
   try:
-    return dict(map(reversed, hash_area.items()))[area]
+    return dict(map(reversed, h_area.items()))[area]
   except (KeyError, ValueError):
     return None
 
 
 def hash_country_code(country_code: str) -> str:
   """Return hashed country code."""
-  return  hash_country.get(country_code, 'xx')
+  return h_country.get(country_code, 'xx')
 
 
 def hash_timestamp(now: Optional[datetime] = None) -> str:
@@ -124,12 +110,12 @@ def hash_timestamp(now: Optional[datetime] = None) -> str:
   """
   if now is None:
     now = datetime.now().replace(microsecond=0)
-  return '{:0>2}{:0>2}{:0>2}{}{:0>2}{:0>2}'.format(str(now.month),
-                                                   str(now.day),
-                                                   str(now.year)[2:],
-                                                   hash_u(now.hour),
-                                                   str(now.minute),
-                                                   str(now.second))
+  return '{}{:0>2}{:0>2}{}{:0>2}{:0>2}'.format(hash_a(now.month),
+                                               str(now.day),
+                                               str(now.year)[2:],
+                                               hash_a(now.hour + 1),
+                                               str(now.minute),
+                                               str(now.second))
 
 
 def bucket_name(country_code: str,
@@ -163,6 +149,7 @@ def bucket_name(country_code: str,
   except TypeError:
     return None
 
+
 def order_name(area_code: str,
                camera_id: Union[int, str],
                timestamp: Optional[datetime] = None) -> Optional[str]:
@@ -171,9 +158,9 @@ def order_name(area_code: str,
   Generate an unique string based on order details.
 
   Args:
-    area_code: Area code from area_id table (P -> Parking lot).
+    area_code: Area code from area_id table (p -> Parking lot).
     camera_id: Camera Id from camera_id table from 00 - 99.
-    timestamp: Current timestamp (default: None) for the file.
+    timestamp: Current timestamp (default: None).
 
   Returns:
     Unique string based on the order details.
@@ -181,8 +168,11 @@ def order_name(area_code: str,
   Raises:
     TypeError: If any positional arguments are skipped.
   """
-  return '{}{:0>2}{}'.format(hash_area_code(area_code),
-                             int(camera_id), hash_timestamp())
+  try:
+    return '{}{:0>2}{}'.format(area_code,
+                               int(camera_id), hash_timestamp(timestamp))
+  except TypeError:
+    return None
 
 
 def video_type(compress: Optional[bool] = False,
@@ -201,18 +191,11 @@ def video_type(compress: Optional[bool] = False,
   Returns:
     String for video type.
   """
-  temp = ['a', 'a', 'a']
-
+  temp = ['a', 'a']
   if compress:
-    temp[1] = 'c'
+      temp[0] = 'c'
   if trim:
-    temp[2] = 'n'
-    if trim_compress:
-      temp[2] = 'c'
-
+      temp[1] = 'n'
+      if trim_compress:
+          temp[1] = 'c'
   return ''.join(temp)
-
-
-def filename(bucket: str, order: str, video_type: str) -> str:
-  """Return filename without extension."""
-  return f'{bucket}{order}{video_type}'
