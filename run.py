@@ -2,6 +2,8 @@
 
 import time
 
+# TODO(xames3): Remove suppressed pyright warnings.
+# pyright: reportMissingTypeStubs=false
 import cv2
 import numpy
 

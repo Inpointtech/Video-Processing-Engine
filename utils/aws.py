@@ -3,6 +3,8 @@
 import os
 from typing import List, Optional
 
+# TODO(xames3): Remove suppressed pyright warnings.
+# pyright: reportMissingTypeStubs=false
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
@@ -27,15 +29,6 @@ def create_s3_bucket(access_key: str,
 
   Returns:
     Boolean value, True if bucket created.
-
-  Examples:
-    >>> from video_processing_engine.utils.aws import create_s3_bucket
-    >>>
-    >>> create_s3_bucket('test_access_key',
-    ...                  'test_secret_key',
-    ...                  'test_bucket_name')
-    True
-    >>>
   """
   try:
     s3 = boto3.client('s3',
@@ -68,17 +61,6 @@ def upload_to_bucket(access_key: str,
 
   Returns:
     Public IP address of the uploaded file.
-
-  Examples:
-    >>> from utils.s3_config import upload_to_bucket
-    >>>
-    >>> upload_to_bucket('test_access_key',
-    ...                  'test_secret_key',
-    ...                  'test_bucket_name')
-    ...                  'test_file_to_upload.py')
-    True
-    >>>
-    https://test_bucket_name.s3.amazonaws.com/test_file_to_upload.py
   """
   try:
     s3 = boto3.client('s3',

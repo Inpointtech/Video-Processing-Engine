@@ -4,9 +4,11 @@ import os
 from typing import Optional
 from urllib.parse import unquote, urlsplit
 
+# TODO(xames3): Remove suppressed pyright warnings.
+# pyright: reportMissingTypeStubs=false
 import requests
 from requests.exceptions import RequestException
-from urllib3.exceptions import RequestError, ResponseError, ResponseNotChunked
+from urllib3.exceptions import RequestError
 
 from video_processing_engine.utils.paths import downloads
 from video_processing_engine.vars import dev

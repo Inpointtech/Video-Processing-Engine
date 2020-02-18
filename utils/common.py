@@ -6,6 +6,8 @@ import subprocess
 from datetime import datetime
 from typing import Optional, Union
 
+# TODO(xames3): Remove suppressed pyright warnings.
+# pyright: reportMissingTypeStubs=false
 from video_processing_engine.vars import dev
 
 parent_path = os.path.dirname(os.path.dirname(__file__))

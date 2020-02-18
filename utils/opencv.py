@@ -2,6 +2,8 @@
 
 from typing import Any, List, Optional, Tuple, Union
 
+# TODO(xames3): Remove suppressed pyright warnings.
+# pyright: reportMissingTypeStubs=false
 import cv2
 import numpy as np
 
@@ -128,7 +130,7 @@ def display_feed(frame: np.ndarray,
     pos_y: Y-position of the displayed feed.
   """
   cv2.namedWindow(name)
-  if pos_x == None or pos_y = None:
+  if pos_x == None or pos_y == None:
     pos_x = pos_y = 0
   cv2.moveWindow(name, pos_x, pos_y)
   cv2.imshow(name, frame)
