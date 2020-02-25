@@ -2,17 +2,21 @@
 
 # Settings for the project
 PROJECT_NAME = 'video_processing_engine'
-PROJECT_LINK = 'https://github.com/akshayinpoint/video_processing_engine/'
+PROJECT_LINK = 'https://github.com/Inpointtech/video_processing_engine/'
 PROJECT_LICENSE = 'Apache 2.0'
 
 # This project adheres to Semantic Versioning Specification (SemVer)
 # starting with version 0.0.1.
 # You can read about it here: https://semver.org/spec/v2.0.0.html
-PROJECT_VERSION = '1.0'
+PROJECT_VERSION = '1.1'
 
 # Author details.
-AUTHOR = 'XA'
-AUTHOR_EMAIL = 'akshay@inpointtech.com'
+AUTHOR = ['XA', 'Nishant']
+AUTHOR_EMAIL = ['akshay@inpointtech.com', 'nishant@inpointtech.com']
+
+# Maintainer details.
+MAINTAINERS = ['XA', 'Nishant']
+MAINTAINER_EMAIL = 'support@bitstreamservices.com'
 
 # Local time zone details
 # You can find all the choices here:
@@ -39,3 +43,10 @@ DRIVE_DOWNLOAD_URL = 'https://docs.google.com/uc?export=download'
 
 # Chunk size
 CHUNK_SIZE = 32768
+
+# Database credentials
+# TODO(xames3): Move to environment variables.
+PG_HOST = 'hostname'
+PG_DB_NAME = 'database_name'
+PG_USER = 'admin_user'
+PG_PASSWORD = 'admin_password'
