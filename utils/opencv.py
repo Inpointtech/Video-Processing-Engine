@@ -28,22 +28,6 @@ def rescale(frame: np.ndarray,
 
   Returns:
     Rescaled numpy array for the input frame.
-
-  Example:
-    >>> import cv2
-    >>> from video_processing_engine.utils.opencv import rescale
-    >>> 
-    >>> stream = cv2.VideoCapture(0) 
-    >>> 
-    >>> while True:
-    ...   _, frame = stream.read()
-    ...   frame = rescale(frame, width=300, interpolation=cv2.INTER_LANCZOS4)
-    ...   cv2.imshow('Test feed', frame)
-    ...   if cv2.waitKey(5) & 0xFF == int(27):
-    ...     break
-    >>> stream.release()
-    >>> cv2.destroyAllWindows()
-    >>>
   """
   dimensions = None
   frame_height, frame_width = frame.shape[:2]
@@ -114,11 +98,11 @@ def draw_box_with_coords(frame: np.ndarray, x: Union[int], y: Union[int],
   return cv2.rectangle(frame, (x, y), (x + w, y + h), color, thickness)
 
 
-def display_feed(frame: np.ndarray,
-                 name: Optional[str] = 'Stream feed',
-                 pos_x: Optional[int] = None,
-                 pos_y: Optional[int] = None) -> None:
-  """Displays the stream feed.
+def positional_feed(frame: np.ndarray,
+                    name: Optional[str] = 'Stream feed',
+                    pos_x: Optional[int] = None,
+                    pos_y: Optional[int] = None) -> None:
+  """Displays the stream feed at a particular position.
 
   Displays the stream. Provides an option to display the stream at X, Y
   position.
@@ -134,3 +118,14 @@ def display_feed(frame: np.ndarray,
     pos_x = pos_y = 0
   cv2.moveWindow(name, pos_x, pos_y)
   cv2.imshow(name, frame)
+
+
+def configure_camera_url(camera_address: str,
+                         camera_username: Optional[str] = 'admin',
+                         camera_password: Optional[str] = 'iamironman',
+                         camera_port: Optional[int] = 554,
+                         camera_stream_address: Optional[str] = 'H.264',
+                         camera_protocol: Optional[str] = 'rtsp') -> str:
+  """Configure camera url for testing."""
+  return (f'{camera_protocol}://{camera_username}:{camera_password}@'
+          f'{camera_address}:{camera_port}/{camera_stream_address}')
