@@ -23,7 +23,7 @@ def trim_video(file: str,
   """Trim video."""
   video = vfc(file, audio=audio, verbose=True).subclip(start, end)
   video.write_videofile(output, audio=audio, preset=preset, threads=threads,
-                        logger=None)
+                        logger=None, codec='libx264')
 
 
 def trim_num_video(file: str,
@@ -31,7 +31,7 @@ def trim_num_video(file: str,
                    audio: Optional[bool] = False,
                    preset: Optional[str] = 'ultrafast',
                    threads: Optional[int] = 15,
-                   display: Optional[bool] = None,
+                   display: Optional[bool] = False,
                    return_list: Optional[bool] = True) -> Optional[List]:
   """Trim video in number of equal parts."""
   split_part = duration(file) / num_parts
