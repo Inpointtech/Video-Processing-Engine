@@ -1,8 +1,8 @@
 """Utility for generating strings and filename."""
 
-import os
+import time
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 # TODO(xames3): Remove suppressed pyright warnings.
 # pyright: reportMissingTypeStubs=false
@@ -10,7 +10,7 @@ from video_processing_engine.utils.hasher import (h_17k, h_26, h_676, h_area,
                                                   h_country)
 
 
-def hash_a(unique_id: Union[int, str]) -> Optional[str]:
+def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
   """Return hashed string code for single unique id from a - z.
 
   The unique id is fetched from the database and should range from 
@@ -18,7 +18,7 @@ def hash_a(unique_id: Union[int, str]) -> Optional[str]:
   This function is ideal for hashing hours & months in a timestamp.
 
   Args:
-    unique_id: Integer or string value from database.
+    unique_id: Integer, float or string value from database.
 
   Returns:
     Hashed string from h_26 dictionary.
@@ -29,7 +29,7 @@ def hash_a(unique_id: Union[int, str]) -> Optional[str]:
   return h_26.get(int(unique_id), None)
 
 
-def hash_aa(unique_id: Union[int, str]) -> Optional[str]:
+def hash_aa(unique_id: Union[int, float, str]) -> Optional[str]:
   """Return hashed string code for the double unique ids from aa - zz.
 
   The unique id is fetched from the database and should range from 
@@ -38,7 +38,7 @@ def hash_aa(unique_id: Union[int, str]) -> Optional[str]:
   This function is suitable for hashing values in range of 00-99.
 
   Args:
-    unique_id: Integer or string value from database.
+    unique_id: Integer, float or string value from database.
 
   Returns:
     Hashed string from h_676 dictionary.
@@ -49,7 +49,7 @@ def hash_aa(unique_id: Union[int, str]) -> Optional[str]:
   return h_676.get(int(unique_id), None)
 
 
-def hash_aaa(unique_id: Union[int, str]) -> Optional[str]:
+def hash_aaa(unique_id: Union[int, float, str]) -> Optional[str]:
   """Return hashed string code for single unique id from aaa - zzz.
 
   The unique id is fetched from the database and should range from 
@@ -59,7 +59,7 @@ def hash_aaa(unique_id: Union[int, str]) -> Optional[str]:
   for the customers.
 
   Args:
-    unique_id: Integer or string value from database.
+    unique_id: Integer, float or string value from database.
 
   Returns:
     Hashed string from h_17k dictionary.
@@ -119,20 +119,18 @@ def hash_timestamp(now: Optional[datetime] = None) -> str:
 
 
 def bucket_name(country_code: str,
-                customer_id: Union[int, str],
-                contract_id: Union[int, str],
-                order_id: Union[int, str],
-                store_id: Union[int, str]) -> Optional[str]:
+                customer_id: Union[int, float, str],
+                contract_id: Union[int, float, str],
+                order_id: Union[int, float, str]) -> Optional[str]:
   """Generate an unique bucket name.
 
   The generated name represents the hierarchy of the stored video.
 
   Args:
     country_code: 2 letter country code (eg: India -> IN).
-    customer_id: Customer Id from customer_id table from 0000 - 9999.
-    contract_id: Contract Id from contract_id table from 00 - 99.
-    order_id: Order Id from order_id table from 00 - 99.
-    store_id: Store Id from store_id table from 000 - 999.
+    customer_id: Customer Id from customer_id table from 1 - 9999.
+    contract_id: Contract Id from contract_id table from 1 - 99.
+    order_id: Order Id from order_id table from 1 - 99.
 
   Returns:
     Unique string name for S3 bucket.
@@ -141,25 +139,26 @@ def bucket_name(country_code: str,
     TypeError: If any positional arguments are skipped.
   """
   try:
-    return '{}{:0>4}{:0>2}{:0>2}{:0>3}'.format(hash_country_code(country_code),
-                                               int(customer_id),
-                                               int(contract_id),
-                                               int(order_id),
-                                               int(store_id))
+    return '{}{:0>4}{:0>2}{:0>2}'.format(hash_country_code(country_code),
+                                         int(customer_id),
+                                         int(contract_id),
+                                         int(order_id))
   except TypeError:
     return None
 
 
-def order_name(area_code: str,
-               camera_id: Union[int, str],
+def order_name(store_id: Union[int, float, str],
+               area_code: str,
+               camera_id: Union[int, float, str],
                timestamp: Optional[datetime] = None) -> Optional[str]:
   """Generate an unique order name.
 
   Generate an unique string based on order details.
 
   Args:
+    store_id: Store Id from store_id table from 1 - 99999.
     area_code: Area code from area_id table (p -> Parking lot).
-    camera_id: Camera Id from camera_id table from 00 - 99.
+    camera_id: Camera Id from camera_id table from 1 - 99.
     timestamp: Current timestamp (default: None).
 
   Returns:
@@ -169,8 +168,8 @@ def order_name(area_code: str,
     TypeError: If any positional arguments are skipped.
   """
   try:
-    return '{}{:0>2}{}'.format(area_code,
-                               int(camera_id), hash_timestamp(timestamp))
+    return '{:0>5}{}{:0>2}{}'.format(int(store_id), area_code, int(camera_id),
+                                     hash_timestamp(timestamp))
   except TypeError:
     return None
 
@@ -199,3 +198,96 @@ def video_type(compress: Optional[bool] = False,
       if trim_compress:
           temp[1] = 'c'
   return ''.join(temp)
+
+
+def unhash_a(value: str) -> Optional[str]:
+  """Return unhashed number from range 1 - 26.
+
+  This function converts the `hashed string` value back to it's numeric
+  form.
+
+  Args:
+    value: String to be unhashed.
+
+  Returns:
+    Unhashed number.
+
+  Raises:
+    KeyError: If an invalid value is passed for unhashing.
+    ValueError: If the value to be unhashed is greater than the range.
+  """
+  try:
+    return str(dict(map(reversed, h_26.items()))[value])
+  except (KeyError, ValueError):
+    return None
+
+
+def unhash_aa(value: str) -> Optional[str]:
+  """Return unhashed number from range 1 - 676.
+
+  Similar to unhash_a(), this function converts the `hashed string`
+  value back to it's numeric form.
+
+  Args:
+    value: String to be unhashed.
+
+  Returns:
+    Unhashed number.
+
+  Raises:
+    KeyError: If an invalid value is passed for unhashing.
+    ValueError: If the value to be unhashed is greater than the range.
+  """
+  try:
+    return str(dict(map(reversed, h_676.items()))[value])
+  except (KeyError, ValueError):
+    return None
+
+
+def unhash_aaa(value: str) -> Optional[str]:
+  """Return unhashed number from range 1 - 17576.
+
+  Similar to unhash_a(), this function converts the `hashed string`
+  value back to it's numeric form.
+
+  Args:
+    value: String to be unhashed.
+
+  Returns:
+    Unhashed number.
+
+  Raises:
+    KeyError: If an invalid value is passed for unhashing.
+    ValueError: If the value to be unhashed is greater than the range.
+  """
+  try:
+    return str(dict(map(reversed, h_17k.items()))[value])
+  except (KeyError, ValueError):
+    return None
+
+
+def unhash_area_code(area_code: str) -> Optional[str]:
+  """Return unhashed area code."""
+  return h_area.get(area_code, None)
+
+
+def unhash_country_code(hashed_code: str) -> Optional[str]:
+  """Return unhashed country code."""
+  try:
+    return dict(map(reversed, h_country.items()))[hashed_code]
+  except (KeyError, ValueError):
+    return None
+
+
+def unhash_timestamp(hashed_timestamp: str,
+                     timestamp_format: str = '%m%d%y%H%M%S',
+                     unix_time: Optional[bool] = False
+                     ) -> Union[datetime, float]:
+  """Returns unhashed timestamp value."""
+  temp = hashed_timestamp.replace(hashed_timestamp[0],
+                                  unhash_a(hashed_timestamp[0]))
+  temp = temp.replace(temp[5], str(int(unhash_a(hashed_timestamp[5])) - 1))
+  if unix_time:
+    return time.mktime(datetime.strptime(temp, timestamp_format).timetuple())
+  else:
+    return datetime.strptime(temp, timestamp_format)
