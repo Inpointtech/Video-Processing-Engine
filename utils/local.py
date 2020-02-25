@@ -11,7 +11,7 @@ from video_processing_engine.utils.generate import hash_aa
 
 
 def create_dir_with_same_filename(file: str) -> str:
-  """Create directory with same filename and return its path.
+  """Create directory with same filename and return it's path.
 
   Args:
     file: File to be used for creating directory.
@@ -49,7 +49,7 @@ def rename_original_file(file: str, bucket_name: str, order_name: str) -> str:
   """Renames original file."""
   new_name = file.replace(Path(file).stem, f'{bucket_name}{order_name}aaaa')
   os.rename(file, file.replace(Path(file).stem,
-                               f'{bucket_name}{order_name}aaaa'))
+                                f'{bucket_name}{order_name}aaaa'))
   return new_name
 
 
