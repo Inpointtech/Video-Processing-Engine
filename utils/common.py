@@ -10,8 +10,6 @@ from typing import Optional, Union
 # pyright: reportMissingTypeStubs=false
 from video_processing_engine.vars import dev
 
-parent_path = os.path.dirname(os.path.dirname(__file__))
-
 
 def check_internet(timeout: Optional[Union[float, int]] = 10.0) -> bool:
   """Check the internet connectivity."""
