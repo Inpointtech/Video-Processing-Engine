@@ -21,7 +21,7 @@ def filename_from_url(public_url: str) -> str:
     public_url: Url of the file.
 
   Returns:
-    Extracted filename from its url.
+    Extracted filename from it's url.
 
   Raises:
     ValueError: If the url has arbitrary characters.
@@ -71,6 +71,15 @@ def download_from_url(public_url: str,
     return None
 
 
+def fetch_confirm_token(response: requests.Response):
+  """Don't know what this is, hence docstring not updated yet."""
+  # TODO(xames3): Update the docstring accordingly.
+  for k, v in response.cookies.items():
+    if k.startswith('download_warning'):
+      return v
+  else:
+    return None
+
 def download_from_google_drive(shareable_url: str,
                                filename: str,
                                download_path: str = downloads
@@ -96,14 +105,24 @@ def download_from_google_drive(shareable_url: str,
     these files are shareable using 'Anyone with the link' link sharing
     option.
   """
+  # You can find the reference code here:
+  # https://stackoverflow.com/a/39225272
   try:
     file_id = shareable_url.split('https://drive.google.com/open?id=')[1]
     session = requests.Session()
     response = session.get(dev.DRIVE_DOWNLOAD_URL,
-                          params={'id': file_id},
-                          stream=True)
-    token = _fetch_confirm_token(response)
+                           params={'id': file_id},
+                           stream=True)
+    token = fetch_confirm_token(response)
     if token:
-      params = {'id': file_id, 'confirm': token}
-      response = session.get(dev.DRIVE_DOWNLOAD_URL, params=params, stream=True)
-    with open(os.path.join23678
+      response = session.get(dev.DRIVE_DOWNLOAD_URL,
+                             params={'id': file_id, 'confirm': token},
+                             stream=True)
+    # Write file to the disk.
+    with open(os.path.join(download_path, filename), 'wb') as file:
+      for chunk in response.iter_content(dev.CHUNK_SIZE):
+        if chunk:
+          file.write(chunk)
+      return True
+  except (RequestError, RequestException):
+    return None
