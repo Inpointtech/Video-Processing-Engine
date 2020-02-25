@@ -5,3 +5,6 @@ moviepy
 autopep8
 pylint
 questionary
+hikvisionapi
+psycopg2
+pandas
