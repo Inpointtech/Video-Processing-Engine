@@ -57,3 +57,32 @@ def trim_random_percentage(file: str, sampling_rate: int) -> str:
   temp = temporary_copy(file)
   trim_video(temp, file, start, end)
   return temp
+
+
+def trim_by_factor(file: str,
+                   factor: Optional[str] = 's',
+                   length: Optional[int] = 30,
+                   last_clip: Optional[bool] = True,
+                   audio: Optional[bool] = False,
+                   preset: Optional[str] = 'ultrafast',
+                   threads: Optional[int] = 15,
+                   display: Optional[bool] = False) -> None:
+  """Trim the video by deciding factor."""
+  total_length = duration(file)
+  idx = 1
+  if factor == 'm':
+    start, end, length = 0, length * 60, length * 60
+  else:
+    start, end = 0, length
+  while length < total_length:
+    trim_video(file, filename(file, idx), start, end, audio, preset, threads)
+    if display:
+      print(f'? Video length » {duration(filename(file, idx), True)}')
+    start, end, idx = end, end + length, idx + 1
+    total_length -= length
+  else:
+    if last_clip:
+      start, end = (duration(file) - total_length), duration(file)
+      trim_video(file, filename(file, idx), start, end, audio, preset, threads)
+      if display:
+        print(f'? Video length » {duration(filename(file, idx), True)}')
