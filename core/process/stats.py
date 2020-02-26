@@ -8,7 +8,6 @@ from typing import Optional, Tuple, Union
 import cv2
 from moviepy.editor import VideoFileClip as vfc
 
-from video_processing_engine.utils.common import file_size
 from video_processing_engine.utils.hasher import h_extension
 
 
