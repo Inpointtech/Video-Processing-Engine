@@ -17,3 +17,6 @@ prototext = os.path.join(models_path, models.FACE_PROTOTEXT)
 
 # Path where all the downloaded files are stored.
 downloads = os.path.join(parent_path, 'downloads')
+
+# Other paths
+live_path = os.path.join(parent_path, 'live')
