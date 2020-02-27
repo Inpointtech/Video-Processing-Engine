@@ -7,6 +7,8 @@ from urllib.parse import unquote, urlsplit
 # TODO(xames3): Remove suppressed pyright warnings.
 # pyright: reportMissingTypeStubs=false
 import requests
+from azure.storage.blob import BlobClient, BlobServiceClient
+from google.cloud import storage
 from requests.exceptions import RequestException
 from urllib3.exceptions import RequestError
 
@@ -90,7 +92,7 @@ def download_from_google_drive(shareable_url: str,
 
   Args:
     shareable_url: Url of the file.
-    filename: Filename (default: None) for the downloaded file.
+    filename: Filename for the downloaded file.
     download_path: Path (default: ./downloads/) for saving file.
 
   Returns:
@@ -125,4 +127,79 @@ def download_from_google_drive(shareable_url: str,
           file.write(chunk)
       return True
   except (RequestError, RequestException):
+    return None
+
+
+def download_from_gcs(bucket_name: str,
+                      source_blob_name: str,
+                      filename: str,
+                      download_path: str = downloads) -> Optional[bool]:
+  """Download file from Google Cloud Storage.
+
+  Download file from Google Cloud Storage and store it in downloads
+  folder.
+
+  Args:
+    bucket_name: Bucket name on GCS.
+    source_blob_name: Blob to download from GCS.
+    filename: Filename for the downloaded file.
+    download_path: Path (default: ./downloads/) for saving file.
+
+  Returns:
+    Boolean value if the file is downloaded or not.
+  """
+  # You can find the reference code here:
+  # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/storage/cloud-client/storage_download_file.py
+  try:
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+    blob.download_to_filename(os.path.join(download_path, filename))
+    return True
+  except Exception:
+    return None
+
+
+def generate_connection_string(account_name: str,
+                               account_key: str,
+                               protocol: Optional[str] = 'https') -> str:
+  """Generates the connection string for Microsoft Azure."""
+  connection_string = (f'DefaultEndpointsProtocol={protocol};'
+                       f'AccountName={account_name};AccountKey={account_key};'
+                       'EndpointSuffix=core.windows.net')
+  return BlobServiceClient.from_connection_string(conn_str=connection_string)
+
+
+def download_from_azure(account_name: str,
+                        account_key: str,
+                        container_name: str,
+                        blob_name: str,
+                        filename: str,
+                        download_path: str = downloads) -> Optional[bool]:
+  """Download file from Microsoft Azure.
+
+  Download file from Microsoft Azure and store it in downloads folder.
+
+  Args:
+    connection_string: Azure connection string/url for that file.
+    container_name: Container from which blob needs to be downloaded.
+    blob_name: Blob to download from Microsoft Azure.
+    filename: Filename for the downloaded file.
+    download_path: Path (default: ./downloads/) for saving file.
+
+  Returns:
+    Boolean value if the file is downloaded or not.
+  """
+  # You can find the reference code here:
+  # https://pypi.org/project/azure-storage-blob/
+  try:
+    connection_string = generate_connection_string(account_name, account_key)
+    blob = BlobClient.from_connection_string(conn_str=connection_string,
+                                             container_name=container_name,
+                                             blob_name=blob_name)
+    with open(os.path.join(download_path, filename), 'wb') as file:
+      data = blob.download_blob()
+      data.readinto(file)
+      return True
+  except Exception:
     return None
