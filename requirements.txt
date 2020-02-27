@@ -8,3 +8,5 @@ questionary
 hikvisionapi
 psycopg2
 pandas
+google-cloud-storage
+azure-storage-blob
