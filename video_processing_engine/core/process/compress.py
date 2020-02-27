@@ -18,7 +18,24 @@ def compress_video(file: str,
                    audio: Optional[bool] = False,
                    preset: Optional[str] = 'ultrafast',
                    threads: Optional[int] = 15) -> str:
-  """Compresses video."""
+  """Compresses video.
+
+  Compresses file as per the requirements.
+
+  Args:
+    file: File to be compressed.
+    codec: Codec (default: libx264 -> .mp4) to be used for compression.
+    bitrate: Bitrate (default: min. 400) used for the compression.
+    fps: FPS (default: 24) of the compressed video.
+    audio: Boolean (default: False) value to have audio in compressed
+           file.
+    preset: The speed (default: ultrafast) used for applying the
+            compression technique.
+    threads: Number of threads (default: 15) to be used for compression.
+
+  Returns:
+    Path of the temporary duplicate file created.
+  """
   if b(file) < 400:
     bitrate = 400
   if f(file) < 24:
