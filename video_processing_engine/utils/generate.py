@@ -280,10 +280,21 @@ def unhash_country_code(hashed_code: str) -> Optional[str]:
 
 
 def unhash_timestamp(hashed_timestamp: str,
-                     timestamp_format: str = '%m%d%y%H%M%S',
+                     timestamp_format: Optional[str] = '%m%d%y%H%M%S',
                      unix_time: Optional[bool] = False
                      ) -> Union[datetime, float]:
-  """Returns unhashed timestamp value."""
+  """Returns unhashed timestamp value.
+
+  Returns the unhashed timestamp as per requirement.
+
+  Args:
+    hashed_timestamp: Hashed timestamp to unhash.
+    timestamp_format: The format of hashed timestamp.
+    unix_time: Boolean (default: False) value if unix time to be used.
+
+  Returns:
+    Datetime object or a Unix time (float) value of the hashed time.
+  """
   temp = hashed_timestamp.replace(hashed_timestamp[0],
                                   unhash_a(hashed_timestamp[0]))
   temp = temp.replace(temp[5], str(int(unhash_a(hashed_timestamp[5])) - 1))
