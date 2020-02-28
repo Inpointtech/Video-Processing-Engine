@@ -20,7 +20,7 @@ def compress_video(file: str,
                    threads: Optional[int] = 15) -> str:
   """Compresses video.
 
-  Compresses file as per the requirements.
+  Compresses video as per the requirements.
 
   Args:
     file: File to be compressed.
