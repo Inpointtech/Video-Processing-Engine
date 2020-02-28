@@ -8,7 +8,7 @@ from video_processing_engine.vars import models
 
 # Parent directory path. All the references will be made relatively
 # using the below defined parent directory.
-parent_path = os.path.dirname(os.path.dirname(__file__))
+parent_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 # Models used in the video processing engine.
 models_path = os.path.join(parent_path, 'models')
