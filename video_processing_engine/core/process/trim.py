@@ -25,7 +25,7 @@ def trim_video(file: str,
                threads: Optional[int] = 15) -> None:
   """Trims video.
 
-  Trims the video as per the requirements.
+  Trims video as per the requirements.
 
   Args:
     file: File to be used for trimming.
@@ -55,7 +55,6 @@ def trim_num_parts(file: str,
                    audio: Optional[bool] = False,
                    preset: Optional[str] = 'ultrafast',
                    threads: Optional[int] = 15,
-                   verbose: Optional[bool] = False,
                    return_list: Optional[bool] = True) -> Optional[List]:
   """Trim video in number of equal parts.
 
@@ -86,8 +85,6 @@ def trim_num_parts(file: str,
                audio, preset, threads)
     start += split_part
     video_list.append(filename(file, idx))
-    if verbose:
-      print(f'? Video trimmed » {os.path.basename(filename(file, idx))}')
   if return_list:
     return video_list
 
@@ -137,8 +134,7 @@ def trim_by_factor(file: str,
                    fps: Optional[int] = 24,
                    audio: Optional[bool] = False,
                    preset: Optional[str] = 'ultrafast',
-                   threads: Optional[int] = 15,
-                   verbose: Optional[bool] = False) -> None:
+                   threads: Optional[int] = 15) -> None:
   """Trims the video by deciding factor.
 
   Trims the video as per the deciding factor i.e. trim by mins OR trim
@@ -158,7 +154,6 @@ def trim_by_factor(file: str,
     preset: The speed (default: ultrafast) used for applying the
             compression technique on the trimmed videos.
     threads: Number of threads (default: 15) to be used for trimming.
-    verbose: Boolean (default: False) value to display the status.
   """
   total_length = duration(file)
   idx = 1
@@ -169,8 +164,6 @@ def trim_by_factor(file: str,
   while length < total_length:
     trim_video(file, filename(file, idx), start, end, codec, bitrate, fps,
                audio, preset, threads)
-    if verbose:
-      print(f'? Video length » {duration(filename(file, idx), True)}')
     start, end, idx = end, end + length, idx + 1
     total_length -= length
   else:
@@ -178,5 +171,3 @@ def trim_by_factor(file: str,
       start, end = (duration(file) - total_length), duration(file)
       trim_video(file, filename(file, idx), start, end, codec, bitrate, fps,
                  audio, preset, threads)
-      if verbose:
-        print(f'? Video length » {duration(filename(file, idx), True)}')
