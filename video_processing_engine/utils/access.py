@@ -203,3 +203,32 @@ def download_from_azure(account_name: str,
       return True
   except Exception:
     return None
+
+
+def download_using_ftp(username: str,
+                       password: str,
+                       public_address: str,
+                       remote_file: str,
+                       download_path: str = downloads) -> Optional[bool]:
+  """Download/fetch/transfer file using OpenSSH via FTP.
+
+  Fetch file from remote machine to store it in downloads folder.
+
+  Args:
+    username: Username of the remote machine.
+    password: Password of the remote machine.
+    public_address: Remote server IP address.
+    remote_file: Remote file to be downloaded/transferred.
+    download_path: Path (default: ./downloads/) for saving file.
+
+  Returns:
+    Boolean value if the file is downloaded or not.
+  """
+  # You can find the reference code here:
+  # https://stackoverflow.com/a/56850195
+  try:
+    os.system(f'sshpass -p {password} scp -o StrictHostKeyChecking=no '
+              f'{username}@{public_address}:{remote_file} {download_path}')
+    return True
+  except OSError:
+    return None
