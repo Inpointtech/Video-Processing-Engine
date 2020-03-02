@@ -26,8 +26,8 @@ def create_dir_with_same_filename(file: str) -> str:
 
 
 def create_copy(file: str,
-                copy_path: Optional[str] = None,
-                copy_name: Optional[str] = None) -> str:
+                copy_path: str = None,
+                copy_name: str = None) -> str:
   """Create copy of the file and return path of the copied file.
 
   Args:
@@ -49,7 +49,7 @@ def rename_original_file(file: str, bucket_name: str, order_name: str) -> str:
   """Renames original file."""
   new_name = file.replace(Path(file).stem, f'{bucket_name}{order_name}aaaa')
   os.rename(file, file.replace(Path(file).stem,
-                                f'{bucket_name}{order_name}aaaa'))
+                               f'{bucket_name}{order_name}aaaa'))
   return new_name
 
 
@@ -61,7 +61,7 @@ def rename_aaaa_file(file: str, video_type: str) -> str:
   return new_name
 
 
-def temporary_rename(file: str, rename: Optional[str] = 'temp_xa') -> str:
+def temporary_rename(file: str, rename: str = 'temp_xa') -> str:
   """Renames file temporarily for operation."""
   temp = os.path.splitext(file)
   return ''.join([temp[0], rename, temp[1]])

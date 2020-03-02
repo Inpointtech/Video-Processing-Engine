@@ -14,7 +14,7 @@ from video_processing_engine.utils.paths import downloads
 def create_s3_bucket(access_key: str,
                      secret_key: str,
                      bucket_name: str,
-                     region: Optional[str] = 'ap-south-1') -> bool:
+                     region: str = 'ap-south-1') -> bool:
   """Create an S3 bucket.
 
   Create an S3 bucket in a specified region.
@@ -47,7 +47,7 @@ def upload_to_bucket(access_key: str,
                      secret_key: str,
                      bucket_name: str,
                      filename: str,
-                     s3_name: Optional[str] = None) -> Optional[str]:
+                     s3_name: str = None) -> Optional[str]:
   """Upload file to S3 bucket.
 
   Uploads file to the S3 bucket and returns it's public IP address.
@@ -99,7 +99,7 @@ def generate_s3_url(bucket_name: str, s3_name: str) -> str:
 def check_file(access_key: str,
                secret_key: str,
                s3_url: str,
-               bucket_name: Optional[str] = None) -> Optional[List]:
+               bucket_name: str = None) -> Optional[List]:
   """Return boolean status, bucket and filename.
 
   Checks if the file is available on S3 bucke and returns bucket and
@@ -132,7 +132,7 @@ def check_file(access_key: str,
 def access_file(access_key: str,
                 secret_key: str,
                 s3_url: str,
-                bucket_name: Optional[str] = None) -> None:
+                bucket_name: str = None) -> None:
   """Access file from S3 bucket.
 
   Access and download file from S3 bucket.
@@ -187,7 +187,7 @@ def save_file(bucket_name: str, filename: str) -> str:
 # def create_glacier_vault(access_key: str,
 #                          secret_key: str,
 #                          vault_name: str,
-#                          region: Optional[str] = 'ap-south-1') -> bool:
+#                          region: str = 'ap-south-1') -> bool:
 #   glacier = boto3.resource('glacier',
 #                            aws_access_key_id=access_key,
 #                            aws_secret_access_key=secret_key,

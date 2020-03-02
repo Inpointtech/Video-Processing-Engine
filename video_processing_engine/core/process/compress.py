@@ -1,6 +1,6 @@
 """A subservice for compressing the videos."""
 
-from typing import Optional
+from typing import Optional, Union
 
 # TODO(xames3): Remove suppressed pyright warnings.
 # pyright: reportMissingTypeStubs=false
@@ -12,12 +12,12 @@ from video_processing_engine.utils.local import temporary_copy
 
 
 def compress_video(file: str,
-                   codec: Optional[str] = 'libx264',
-                   bitrate: Optional[int] = 400,
-                   fps: Optional[int] = 24,
-                   audio: Optional[bool] = False,
-                   preset: Optional[str] = 'ultrafast',
-                   threads: Optional[int] = 15) -> str:
+                   codec: str = 'libx264',
+                   bitrate:  Union[int, str] = 400,
+                   fps: Union[float, int] = 24,
+                   audio: bool = False,
+                   preset: str = 'ultrafast',
+                   threads: int = 15) -> str:
   """Compresses video.
 
   Compresses video as per the requirements.
@@ -48,6 +48,6 @@ def compress_video(file: str,
   return temp
 
 
-def choose_extension(codec: Optional[str] = 'libx264') -> str:
+def choose_extension(codec: str = 'libx264') -> str:
     """Returns suitable file extension."""
     return h_extension.get(codec, 'mp4')

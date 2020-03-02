@@ -37,7 +37,7 @@ def filename_from_url(public_url: str) -> str:
 
 
 def download_from_url(public_url: str,
-                      filename: Optional[str] = None,
+                      filename: str = None,
                       download_path: str = downloads) -> Optional[bool]:
   """Downloads file from the url.
 
@@ -162,7 +162,7 @@ def download_from_gcs(bucket_name: str,
 
 def generate_connection_string(account_name: str,
                                account_key: str,
-                               protocol: Optional[str] = 'https') -> str:
+                               protocol: str = 'https') -> BlobServiceClient:
   """Generates the connection string for Microsoft Azure."""
   connection_string = (f'DefaultEndpointsProtocol={protocol};'
                        f'AccountName={account_name};AccountKey={account_key};'

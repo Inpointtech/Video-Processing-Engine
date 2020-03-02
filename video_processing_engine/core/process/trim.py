@@ -15,14 +15,14 @@ from video_processing_engine.utils.local import temporary_copy
 
 def trim_video(file: str,
                output: str,
-               start: Optional[Union[float, int]] = 0,
-               end: Optional[Union[float, int]] = 30,
-               codec: Optional[str] = 'libx264',
-               bitrate: Optional[int] = 400,
-               fps: Optional[int] = 24,
-               audio: Optional[bool] = False,
-               preset: Optional[str] = 'ultrafast',
-               threads: Optional[int] = 15) -> None:
+               start: Union[float, int, str] = 0,
+               end: Union[float, int, str] = 30,
+               codec: str = 'libx264',
+               bitrate: Union[int, str] = 400,
+               fps: Union[float, int] = 24 ,
+               audio: bool = False,
+               preset: str = 'ultrafast',
+               threads: int = 15) -> None:
   """Trims video.
 
   Trims video as per the requirements.
@@ -49,13 +49,13 @@ def trim_video(file: str,
 
 def trim_num_parts(file: str,
                    num_parts: int,
-                   codec: Optional[str] = 'libx264',
-                   bitrate: Optional[int] = 400,
-                   fps: Optional[int] = 24,
-                   audio: Optional[bool] = False,
-                   preset: Optional[str] = 'ultrafast',
-                   threads: Optional[int] = 15,
-                   return_list: Optional[bool] = True) -> Optional[List]:
+                   codec: str = 'libx264',
+                   bitrate: Union[int, str] = 400,
+                   fps: Union[float, int] = 24 ,
+                   audio: bool = False,
+                   preset: str = 'ultrafast',
+                   threads: int = 15,
+                   return_list: bool = True) -> Optional[List]:
   """Trim video in number of equal parts.
 
   Trims the video as per the number of clips required.
@@ -91,12 +91,12 @@ def trim_num_parts(file: str,
 
 def trim_sample_section(file: str,
                         sampling_rate: int,
-                        codec: Optional[str] = 'libx264',
-                        bitrate: Optional[int] = 400,
-                        fps: Optional[int] = 24,
-                        audio: Optional[bool] = False,
-                        preset: Optional[str] = 'ultrafast',
-                        threads: Optional[int] = 15) -> str:
+                        codec: str = 'libx264',
+                        bitrate: Union[int, str] = 400,
+                        fps: Union[float, int] = 24 ,
+                        audio: bool = False,
+                        preset: str = 'ultrafast',
+                        threads: int = 15) -> str:
   """Trim a sample portion of the video as per the sampling rate.
 
   Trims a random sample portion of the video as per the sampling rate.
@@ -126,15 +126,15 @@ def trim_sample_section(file: str,
 
 
 def trim_by_factor(file: str,
-                   factor: Optional[str] = 's',
-                   length: Optional[int] = 30,
-                   last_clip: Optional[bool] = True,
-                   codec: Optional[str] = 'libx264',
-                   bitrate: Optional[int] = 400,
-                   fps: Optional[int] = 24,
-                   audio: Optional[bool] = False,
-                   preset: Optional[str] = 'ultrafast',
-                   threads: Optional[int] = 15) -> None:
+                   factor: str = 's',
+                   length: Union[float, int] = 30,
+                   last_clip: bool = True,
+                   codec: str = 'libx264',
+                   bitrate: Union[int, str] = 400,
+                   fps: Union[float, int] = 24 ,
+                   audio: bool = False,
+                   preset: str = 'ultrafast',
+                   threads: int = 15) -> None:
   """Trims the video by deciding factor.
 
   Trims the video as per the deciding factor i.e. trim by mins OR trim

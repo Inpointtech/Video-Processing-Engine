@@ -56,9 +56,9 @@ def disconnect(stream: np.ndarray) -> None:
 def draw_bounding_box(frame: np.ndarray,
                       x0_y0: Tuple,
                       x1_y1: Tuple,
-                      color: Optional[List] = green,
-                      alpha: Optional[Union[float, int]] = 0.3,
-                      thickness: Optional[int] = 2) -> None:
+                      color: List = green,
+                      alpha: Union[float, int] = 0.3,
+                      thickness: int = 2) -> None:
   """Draw bounding box using the Numpy tuple.
   Draws the bounding box around the detection using tuple of numpy
   coordinates.
@@ -86,9 +86,9 @@ def draw_bounding_box(frame: np.ndarray,
 
 
 def positional_feed(frame: np.ndarray,
-                    name: Optional[str] = 'Stream feed',
-                    pos_x: Optional[int] = None,
-                    pos_y: Optional[int] = None) -> None:
+                    name: str = 'Stream feed',
+                    pos_x: int = None,
+                    pos_y: int = None) -> None:
   """Displays the stream feed at a particular position.
 
   Displays the stream. Provides an option to display the stream at X, Y
@@ -108,20 +108,20 @@ def positional_feed(frame: np.ndarray,
 
 
 def configure_camera_url(camera_address: str,
-                         camera_username: Optional[str] = 'admin',
-                         camera_password: Optional[str] = 'iamironman',
-                         camera_port: Optional[int] = 554,
-                         camera_stream_address: Optional[str] = 'H.264',
-                         camera_protocol: Optional[str] = 'rtsp') -> str:
+                         camera_username: str = 'admin',
+                         camera_password: str = 'iamironman',
+                         camera_port: int = 554,
+                         camera_stream_address: str = 'H.264',
+                         camera_protocol: str = 'rtsp') -> str:
   """Configure camera url for testing."""
   return (f'{camera_protocol}://{camera_username}:{camera_password}@'
           f'{camera_address}:{camera_port}/{camera_stream_address}')
 
 
 def draw_centroid(frame: np.ndarray,
-                  radius: Optional[int] = 5,
-                  color: Optional[List] = yellow,
-                  thickness: Optional[int] = 1) -> None:
+                  radius: int = 5,
+                  color: List = yellow,
+                  thickness: int = 1) -> None:
   """Draw centroid for the detected shape/contour."""
   gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   blur_frame = cv2.GaussianBlur(gray_frame, (5, 5), 0)
