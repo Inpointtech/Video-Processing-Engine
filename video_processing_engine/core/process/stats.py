@@ -11,6 +11,9 @@ from moviepy.editor import VideoFileClip as vfc
 from video_processing_engine.utils.common import file_size
 from video_processing_engine.utils.hasher import h_extension
 
+video_file_extensions = ('.3gp', '.mp4', '.avi', '.webm',
+                         '.mov', '.mkv', '.ogv', '.ts')
+
 
 def codec(file: str) -> str:
   """Returns type of codec used in the video file."""
@@ -18,7 +21,7 @@ def codec(file: str) -> str:
 
 
 def duration(file: str,
-             for_humans: Optional[bool] = False) -> Union[float, str]:
+             for_humans: bool = False) -> Union[float, str]:
   """Returns duration of the video file."""
   if for_humans:
     mins, secs = divmod(vfc(file).duration, 60)
@@ -41,12 +44,12 @@ def fps(file: str) -> Union[float, int]:
   return cv2.VideoCapture(file).get(cv2.CAP_PROP_FPS)
 
 
-def check_usable_length(file: str, minimum_length: Optional[int] = 30) -> bool:
+def check_usable_length(file: str, minimum_length: int = 30) -> bool:
   """Returns boolean value after checking usuable video length."""
   return True if duration(file) >= 24 * minimum_length else False
 
 
 def all_stats(file: str) -> Tuple:
   """Returns all the statistics of the video file."""
-  return (os.path.basename(file), duration(file, True), bitrate(file),
-          fps(file), codec(file), check_usable_length(file))
+  return (os.path.basename(file), duration(file, True), int(bitrate(file)),
+          fps(file), codec(file), file_size(file), check_usable_length(file))
