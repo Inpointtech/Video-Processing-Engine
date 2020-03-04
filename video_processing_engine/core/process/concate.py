@@ -34,7 +34,6 @@ def get_concate_list(files: List) -> str:
 
 def concate_videos(files: List,
                    output: str,
-                   retain_stats: bool = True,
                    delete_old_files: bool = True) -> str:
   """Concatenates video.
 
@@ -43,7 +42,6 @@ def concate_videos(files: List,
   Args:
     file: List of files to be concatenated.
     output: Name of the output file.
-    retain_stats: Boolean (default: True) to use the existing stats.
     delete_old_files: Boolean (default: True) value to delete the older
                       files once the concatenation is done.
 
@@ -70,7 +68,6 @@ def concate_videos(files: List,
 def concate_everything_but_live(directory: str,
                                 live_file: str,
                                 output: str,
-                                retain_stats: bool = True,
                                 delete_old_files: bool = True) -> str:
   """Concatenates video except the live video.
 
@@ -80,7 +77,6 @@ def concate_everything_but_live(directory: str,
     file: List of files to be concatenated.
     live_file: Live file to be skipped while concatenating.
     output: Path of the output file.
-    retain_stats: Boolean (default: True) to use the existing stats.
     delete_old_files: Boolean (default: True) value to delete the older
                       files once the concatenation is done.
 
@@ -93,4 +89,4 @@ def concate_everything_but_live(directory: str,
     if os.path.splitext(file)[1] in video_file_extensions:
       concate_files.append(file)
   concate_files.remove(live_file)
-  return concate_videos(concate_files, output, retain_stats, delete_old_files)
+  return concate_videos(concate_files, output, delete_old_files)
