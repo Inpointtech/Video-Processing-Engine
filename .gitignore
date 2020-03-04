@@ -136,3 +136,4 @@ backup/
 /models/deploy.prototxt.txt
 /models/facial_landmarks.dat
 /models/frozen_east_text_detection.pb
+/video_processing_engine/run.py
