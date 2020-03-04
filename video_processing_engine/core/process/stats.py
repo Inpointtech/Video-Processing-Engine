@@ -21,7 +21,7 @@ def codec(file: str) -> str:
 
 
 def duration(file: str,
-             for_humans: bool = False) -> Union[float, str]:
+             for_humans: bool = False) -> Union[float, str, int]:
   """Returns duration of the video file."""
   if for_humans:
     mins, secs = divmod(vfc(file).duration, 60)
@@ -44,12 +44,27 @@ def fps(file: str) -> Union[float, int]:
   return cv2.VideoCapture(file).get(cv2.CAP_PROP_FPS)
 
 
-def check_usable_length(file: str, minimum_length: int = 30) -> bool:
+def check_usable_length(file: str,
+                        num_clips: int = 24,
+                        minimum_length: int = 30) -> bool:
   """Returns boolean value after checking usuable video length."""
-  return True if duration(file) >= 24 * minimum_length else False
+  return True if duration(file) >= num_clips * minimum_length else False
 
 
 def all_stats(file: str) -> Tuple:
   """Returns all the statistics of the video file."""
   return (os.path.basename(file), duration(file, True), int(bitrate(file)),
           fps(file), codec(file), file_size(file), check_usable_length(file))
+
+
+def usuable_difference(video_length: Union[float, int],
+                       num_clips: int = 24,
+                       minimum_length: int = 30) -> bool:
+  """Returns boolean value after checking the difference."""
+  return True if video_length >= num_clips * minimum_length else False
+
+
+def minimum_sampling_rate(num_clips: int = 24,
+                          minimum_length: int = 30) -> int:
+  """Return minimum sampling rate required."""
+  return num_clips * minimum_length
