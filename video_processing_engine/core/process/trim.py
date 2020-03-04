@@ -4,25 +4,16 @@ import os
 import random
 from typing import List, Optional, Union
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
-from moviepy.editor import VideoFileClip as vfc
-
-from video_processing_engine.utils.local import filename
-from video_processing_engine.core.process.stats import duration
-from video_processing_engine.utils.local import temporary_copy
+from video_processing_engine.core.process.stats import (all_stats, duration,
+                                                        minimum_sampling_rate,
+                                                        usuable_difference)
+from video_processing_engine.utils.local import filename, temporary_copy, quick_rename
 
 
 def trim_video(file: str,
-               output: str,
+               output: str = None,
                start: Union[float, int, str] = 0,
-               end: Union[float, int, str] = 30,
-               codec: str = 'libx264',
-               bitrate: Union[int, str] = 400,
-               fps: Union[float, int] = 24 ,
-               audio: bool = False,
-               preset: str = 'ultrafast',
-               threads: int = 15) -> None:
+               end: Union[float, int, str] = 30) -> None:
   """Trims video.
 
   Trims video as per the requirements.
@@ -32,29 +23,16 @@ def trim_video(file: str,
     output: Path of the output file.
     start: Starting point (default: 0) of the video in secs.
     end: Ending point (default: 30) of the video in secs.
-    codec: Codec (default: libx264 -> .mp4) to be used while trimming.
-    bitrate: Bitrate (default: min. 400) used while trimming.
-    fps: FPS (default: 24) of the trimmed video clips.
-    audio: Boolean (default: False) value to have audio in trimmed
-            videos.
-    preset: The speed (default: ultrafast) used for applying the
-            compression technique on the trimmed videos.
-    threads: Number of threads (default: 15) to be used for trimming.
   """
-  video = vfc(file, audio=audio, verbose=True).subclip(start, end)
-  video.write_videofile(output, codec=codec, fps=fps, audio=audio,
-                        preset=preset, threads=threads, bitrate=f'{bitrate}k',
-                        logger=None)
+  file, temp = quick_rename(file)
+  if output:
+    file = output
+  os.system(f'ffmpeg -loglevel error -y -ss {start} -i {temp} -t {end} '
+            f'-c copy {file}')
 
 
 def trim_num_parts(file: str,
                    num_parts: int,
-                   codec: str = 'libx264',
-                   bitrate: Union[int, str] = 400,
-                   fps: Union[float, int] = 24 ,
-                   audio: bool = False,
-                   preset: str = 'ultrafast',
-                   threads: int = 15,
                    return_list: bool = True) -> Optional[List]:
   """Trim video in number of equal parts.
 
@@ -63,17 +41,8 @@ def trim_num_parts(file: str,
   Args:
     file: File to be used for trimming.
     num_parts: Number of videos to be trimmed into.
-    codec: Codec (default: libx264 -> .mp4) to be used while trimming.
-    bitrate: Bitrate (default: min. 400) used while trimming.
-    fps: FPS (default: 24) of the trimmed video clips.
-    audio: Boolean (default: False) value to have audio in trimmed
-            videos.
-    preset: The speed (default: ultrafast) used for applying the
-            compression technique on the trimmed videos.
-    threads: Number of threads (default: 15) to be used for trimming.
-    verbose: Boolean (default: False) value to display the status.
     return_list: Boolean (default: True) value to return list of all the
-                 trimmed files.
+                  trimmed files.
   """
   split_part = duration(file) / num_parts
   start = 0
@@ -81,8 +50,7 @@ def trim_num_parts(file: str,
   video_list = []
   for idx in range(1, num_parts + 1):
     start, end = start, start + split_part
-    trim_video(file, filename(file, idx), start, end, codec, bitrate, fps,
-               audio, preset, threads)
+    trim_video(file, filename(file, idx), start, end)
     start += split_part
     video_list.append(filename(file, idx))
   if return_list:
@@ -91,12 +59,8 @@ def trim_num_parts(file: str,
 
 def trim_sample_section(file: str,
                         sampling_rate: int,
-                        codec: str = 'libx264',
-                        bitrate: Union[int, str] = 400,
-                        fps: Union[float, int] = 24 ,
-                        audio: bool = False,
-                        preset: str = 'ultrafast',
-                        threads: int = 15) -> str:
+                        num_clips: int = 24,
+                        minimum_length: int = 30) -> Union[int, str]:
   """Trim a sample portion of the video as per the sampling rate.
 
   Trims a random sample portion of the video as per the sampling rate.
@@ -104,37 +68,27 @@ def trim_sample_section(file: str,
   Args:
     file: File to be used for trimming.
     sampling_rate: Portion of the video to be trimmed.
-    codec: Codec (default: libx264 -> .mp4) to be used while trimming.
-    bitrate: Bitrate (default: min. 400) used while trimming.
-    fps: FPS (default: 24) of the trimmed video.
-    audio: Boolean (default: False) value to have audio in trimmed
-            video.
-    preset: The speed (default: ultrafast) used for applying the
-            compression technique on the trimmed video.
-    threads: Number of threads (default: 15) to be used for trimming.
+    num_clips: Number of videos (default: 24) to be trimmed.
+    minimum_length: Minimum video length (default: 30 secs) required.
 
   Returns:
     Path of the temporary duplicate file created.
   """
   clip_length = (duration(file) * sampling_rate) // 100
   start = random.randint(1, int(duration(file)))
-  end = start + clip_length
-  temp = temporary_copy(file)
-  trim_video(temp, file, start, end, codec, bitrate, fps, audio, preset,
-             threads)
-  return temp
+  end = int(start + clip_length)
+  if usuable_difference(clip_length, num_clips, minimum_length):
+    trim_video(file, start=start, end=end)
+    return file
+  else:
+    return (int((minimum_sampling_rate(num_clips, minimum_length) * 100)
+                // duration(file)) + 1)
 
 
 def trim_by_factor(file: str,
                    factor: str = 's',
                    length: Union[float, int] = 30,
-                   last_clip: bool = True,
-                   codec: str = 'libx264',
-                   bitrate: Union[int, str] = 400,
-                   fps: Union[float, int] = 24 ,
-                   audio: bool = False,
-                   preset: str = 'ultrafast',
-                   threads: int = 15) -> None:
+                   last_clip: bool = True) -> None:
   """Trims the video by deciding factor.
 
   Trims the video as per the deciding factor i.e. trim by mins OR trim
@@ -143,17 +97,8 @@ def trim_by_factor(file: str,
   Args:
     file: File to be used for trimming.
     factor: Trimming factor (default: secs -> s) to consider.
-    length: Length (default: 30) of each video clip.
+    length: Length (default: 30 secs) of each video clip.
     last_clip: Boolean (default: True) value to consider the remaining
-               portion of the trimmed video.
-    codec: Codec (default: libx264 -> .mp4) to be used while trimming.
-    bitrate: Bitrate (default: min. 400) used while trimming.
-    fps: FPS (default: 24) of the trimmed video clips.
-    audio: Boolean (default: False) value to have audio in trimmed
-            videos.
-    preset: The speed (default: ultrafast) used for applying the
-            compression technique on the trimmed videos.
-    threads: Number of threads (default: 15) to be used for trimming.
   """
   total_length = duration(file)
   idx = 1
@@ -162,12 +107,10 @@ def trim_by_factor(file: str,
   else:
     start, end = 0, length
   while length < total_length:
-    trim_video(file, filename(file, idx), start, end, codec, bitrate, fps,
-               audio, preset, threads)
+    trim_video(file, filename(file, idx), start, end)
     start, end, idx = end, end + length, idx + 1
     total_length -= length
   else:
     if last_clip:
       start, end = (duration(file) - total_length), duration(file)
-      trim_video(file, filename(file, idx), start, end, codec, bitrate, fps,
-                 audio, preset, threads)
+      trim_video(file, filename(file, idx), start, end)
