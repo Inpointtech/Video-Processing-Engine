@@ -1,5 +1,6 @@
 """Utility for making convenient use of OpenCV."""
 
+import socket
 from typing import Any, List, Optional, Tuple, Union
 
 # TODO(xames3): Remove suppressed pyright warnings.
@@ -136,3 +137,17 @@ def draw_centroid(frame: np.ndarray,
     y = int(moment['m01'] / moment['m00']) if moment['m00'] > 0 else 0
     cv2.drawContours(frame, [contour], -1, color, thickness)
     cv2.circle(frame, (x, y), radius, color, -1)
+
+
+def camera_live(camera_address: str,
+                camera_port: int = 554,
+                timeout: Optional[Union[float, int]] = 10.0) -> bool:
+  """Check if any camera connectivity is available."""
+  # You can find the reference code here:
+  # https://gist.github.com/yasinkuyu/aa505c1f4bbb4016281d7167b8fa2fc2
+  try:
+    socket.create_connection((camera_address, camera_port), timeout = timeout)
+    return True
+  except OSError:
+    pass
+  return False
