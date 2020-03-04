@@ -3,7 +3,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Tuple
 
 # TODO(xames3): Remove suppressed pyright warnings.
 # pyright: reportMissingTypeStubs=false
@@ -64,7 +64,7 @@ def rename_aaaa_file(file: str, video_type: str) -> str:
 def temporary_rename(file: str, rename: str = 'temp_xa') -> str:
   """Renames file temporarily for operation."""
   temp = os.path.splitext(file)
-  return ''.join([temp[0], rename, temp[1]])
+  return ''.join([temp[0], '_', rename, temp[1]])
 
 
 def temporary_copy(file: str) -> str:
@@ -77,3 +77,10 @@ def filename(file: str, video_num: int) -> str:
   """Returns filename with hashed index."""
   temp_name = os.path.splitext(file)
   return ''.join([temp_name[0], hash_aa(video_num), temp_name[1]])
+
+
+def quick_rename(file: str) -> Tuple[str, str]:
+  """Renames file in runtime and returns the original file name."""
+  _temp = temporary_rename(file)
+  os.rename(file, _temp)
+  return file, _temp
