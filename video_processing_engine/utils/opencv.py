@@ -140,12 +140,13 @@ def draw_centroid(frame: np.ndarray,
 
 
 def camera_live(camera_address: str,
-                camera_port: int = 554,
+                camera_port: Union[int, str] = 554,
                 timeout: Optional[Union[float, int]] = 10.0) -> bool:
   """Check if any camera connectivity is available."""
   # You can find the reference code here:
   # https://gist.github.com/yasinkuyu/aa505c1f4bbb4016281d7167b8fa2fc2
   try:
+    camera_port = int(camera_port)
     socket.create_connection((camera_address, camera_port), timeout = timeout)
     return True
   except OSError:

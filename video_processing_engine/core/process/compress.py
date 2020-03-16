@@ -29,5 +29,6 @@ def compress_video(file: str, ratio: int) -> Optional[str]:
   else:
     return None
   file, temp = quick_rename(file)
-  os.system(f'ffmpeg -loglevel error -y -i {temp} -b {bitrate} {file}')
+  os.system(f'ffmpeg -loglevel error -y -i {temp} -vcodec copy -acodec '
+            f'copy -b {bitrate} {file}')
   return temp

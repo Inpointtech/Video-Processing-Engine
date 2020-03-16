@@ -8,6 +8,7 @@ from typing import Optional, Tuple, Union
 # pyright: reportMissingTypeStubs=false
 from video_processing_engine.utils.hasher import (h_17k, h_26, h_676, h_area,
                                                   h_country)
+from video_processing_engine.utils.exceptions import BucketNameZeroError, HashValueHasZeroError, HashValueLimitExceedError
 
 
 def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
@@ -26,7 +27,17 @@ def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
   Notes:
     Values greater than 26 will return None.
   """
-  return h_26.get(int(unique_id), None)
+  try:
+    if unique_id > 26:
+      raise HashValueLimitExceedError
+    if unique_id == 0:
+      raise HashValueHasZeroError
+  except HashValueLimitExceedError as error:
+    print(f'HashValueLimitExceedError: {error}')
+  except HashValueHasZeroError as error:
+    print(f'HashValueHasZeroError: {error}')
+  finally:  
+    return h_26.get(int(unique_id), None)
 
 
 def hash_aa(unique_id: Union[int, float, str]) -> Optional[str]:
@@ -46,7 +57,17 @@ def hash_aa(unique_id: Union[int, float, str]) -> Optional[str]:
   Notes:
     Values greater than 676 will return None.
   """
-  return h_676.get(int(unique_id), None)
+  try:
+    if unique_id > 676:
+      raise HashValueLimitExceedError
+    if unique_id == 0:
+      raise HashValueHasZeroError
+  except HashValueLimitExceedError as error:
+    print(f'HashValueLimitExceedError: {error}')
+  except HashValueHasZeroError as error:
+    print(f'HashValueHasZeroError: {error}')
+  finally:
+    return h_676.get(int(unique_id), None)
 
 
 def hash_aaa(unique_id: Union[int, float, str]) -> Optional[str]:
@@ -139,12 +160,16 @@ def bucket_name(country_code: str,
     TypeError: If any positional arguments are skipped.
   """
   try:
+    if customer_id == 0 or contract_id == 0 or order_id == 0:
+      raise BucketNameZeroError
+  except BucketNameZeroError as error:
+    print(f'BucketNameError: {error}')
+    return None
+  else:
     return '{}{:0>4}{:0>2}{:0>2}'.format(hash_country_code(country_code),
                                          int(customer_id),
                                          int(contract_id),
                                          int(order_id))
-  except TypeError:
-    return None
 
 
 def order_name(store_id: Union[int, float, str],
@@ -168,10 +193,14 @@ def order_name(store_id: Union[int, float, str],
     TypeError: If any positional arguments are skipped.
   """
   try:
-    return '{:0>5}{}{:0>2}{}'.format(int(store_id), area_code, int(camera_id),
-                                     hash_timestamp(timestamp))
-  except TypeError:
+    if store_id == 0 or camera_id == 0:
+      raise BucketNameError(6901)
+  except BucketNameError as error:
+    print(f'BucketNameError: {error.errors[6901]}')
     return None
+  else:
+    return '{:0>5}{}{:0>2}{}'.format(int(store_id), area_code,
+                                     int(camera_id), hash_timestamp(timestamp))
 
 
 def video_type(compress: bool = False,

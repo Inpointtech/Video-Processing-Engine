@@ -71,3 +71,35 @@ def file_size(path: str) -> Optional[str]:
   """Return the file size."""
   if os.path.isfile(path):
     return convert_bytes(os.stat(path).st_size)
+
+
+def timestamp_dirname(ts_format: str = '%d_%m_%Y_%H_%M_%S') -> str:
+  """Returns current time in a timestamp format."""
+  return str(now().strftime(ts_format))
+
+
+def calculate_duration(start_time: str,
+                       end_time: str,
+                       timestamp_format: str = '%Y-%m-%d %H:%M:%S',
+                       turntable_mode: bool = False
+                       ) -> float:
+  """Calculate the time duration in secs for selected intervals.
+
+  Calculates the time delta between given intervals in secs.
+
+  Args:
+    start_time: Starting timestamp.
+    end_time: Ending timestamp.
+    timestamp_format: Timestamp format (default: %Y-%m-%d %H:%M:%S) of
+                      the given intervals.
+
+  Returns:
+    Timedelta in secs.
+  """
+  if turntable_mode:
+    _start_time = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+    _end_time = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
+  else:
+    _start_time = datetime.strptime(start_time, timestamp_format)
+    _end_time = datetime.strptime(end_time, timestamp_format)
+  return float((_end_time - _start_time).seconds)

@@ -39,7 +39,10 @@ def create_s3_bucket(access_key: str,
     return False
   else:
     location = {'LocationConstraint': region}
-    s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
+    try:
+      s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
+    except:
+      pass
     return True
 
 
@@ -76,7 +79,8 @@ def upload_to_bucket(access_key: str,
         return None
       else:
         s3.upload_file(filename, bucket_name, s3_name,
-                       ExtraArgs={'ACL': 'public-read'})
+                       ExtraArgs={'ACL': 'public-read',
+                                  'ContentType': 'video/mp4'})
         return generate_s3_url(bucket_name, s3_name)
 
 
@@ -184,6 +188,27 @@ def save_file(bucket_name: str, filename: str) -> str:
   return os.path.join(os.path.join(downloads, bucket_name), filename)
 
 
+def copy_file_from_bucket(access_key: str,
+                          secret_key: str,
+                          customer_bucket_name: str,
+                          customer_obj_key: str,
+                          bucket_name: str,
+                          bucket_obj_key: str = None) -> Optional[bool]:
+  """Copy an object from one S3 bucket to another."""
+  try:
+    s3 = boto3.resource('s3',
+                        aws_access_key_id=access_key,
+                        aws_secret_access_key=secret_key)
+  except (ClientError, NoCredentialsError):
+    return None
+  else:
+    copy_source = {
+        'Bucket': customer_bucket_name,
+        'Key': customer_obj_key
+    }
+    s3.meta.client.copy(copy_source, bucket_name, bucket_obj_key)
+    return True
+
 # def create_glacier_vault(access_key: str,
 #                          secret_key: str,
 #                          vault_name: str,
@@ -195,3 +220,11 @@ def save_file(bucket_name: str, filename: str) -> str:
 #   vault = glacier.Vault('account ID', 'cppsecvault1')
 #   response = vault.create()
 #   print(response)
+
+
+# xa = copy_file_from_bucket('AKIAR4DHCUP262T3WIUX',
+#                            'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
+#                            'eshaproject', 's.jpg'
+#                            'xx00250123', 's.jpg',
+#                            )
+# print(xa)

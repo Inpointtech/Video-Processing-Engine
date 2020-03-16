@@ -130,6 +130,9 @@ tests/
 docs/
 demo/
 backup/
+live/
+reports/
+/video_processing_engine/config/
 
 # Ignored on-device files
 /models/res10_300x300_ssd_iter_140000.caffemodel

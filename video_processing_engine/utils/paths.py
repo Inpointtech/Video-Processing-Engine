@@ -20,3 +20,4 @@ downloads = os.path.join(parent_path, 'downloads')
 
 # Other paths
 live_path = os.path.join(parent_path, 'live')
+reports_path = os.path.join(parent_path, 'reports')

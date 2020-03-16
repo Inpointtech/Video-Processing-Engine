@@ -79,8 +79,9 @@ def filename(file: str, video_num: int) -> str:
   return ''.join([temp_name[0], hash_aa(video_num), temp_name[1]])
 
 
-def quick_rename(file: str) -> Tuple[str, str]:
+def quick_rename(file: str, force: bool = True) -> Tuple[str, str]:
   """Renames file in runtime and returns the original file name."""
   _temp = temporary_rename(file)
-  os.rename(file, _temp)
+  if force:
+    os.rename(file, _temp)
   return file, _temp
