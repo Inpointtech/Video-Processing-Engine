@@ -53,7 +53,8 @@ def save_num_video(bucket_name: str,
   file = os.path.join(live_path, f'{bucket_name}{order_name}{vid_type}.mp4')
   for idx in range(1, num_of_clips + 1):
     file = filename(file, idx)
-    url = configure_camera_url(camera_address, camera_username, camera_password)
+    url = configure_camera_url(
+        camera_address, camera_username, camera_password)
     subprocess.check_call(ffmpeg_str(url, file, duration), shell=True)
 
 
@@ -74,7 +75,7 @@ def start_live_recording(bucket_name: str,
   duration = calculate_duration(start_time, end_time, timestamp_format, True)
   force_close = datetime.strptime(end_time,
                                   '%Y-%m-%d %H:%M:%S').replace(
-                                  tzinfo=timezone.utc).timestamp()
+      tzinfo=timezone.utc).timestamp()
   vid_type = video_type(True, True, True)
   temp_path = os.path.join(
       live_path, f'{bucket_name}{order_name}_{timestamp_dirname()}')
@@ -129,8 +130,3 @@ def trigger_live_capture(bucket_name: str,
                                   camera_password, camera_port, camera_timeout,
                                   timestamp_format)
     time.sleep(1.0)
-
-# '203.192.197.184', 'admin', 'AGXIDJ', 9000
-# xa = start_live_recording('bucket', 'order', '18:35:00', '18:40:00',
-#                           '203.192.197.184', 'admin', 'AGXIDJ', 9000)
-# print(xa)
