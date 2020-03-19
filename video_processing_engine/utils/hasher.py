@@ -1,7 +1,7 @@
 """Utility for generating the raw hashes."""
 
-import string
 import itertools
+import string
 
 # Dictionary for characters from range 1 - 26.
 h_26 = {k: v for k, v in enumerate(string.ascii_lowercase, start=1)}

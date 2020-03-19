@@ -5,8 +5,6 @@ import shutil
 from pathlib import Path
 from typing import Tuple
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
 from video_processing_engine.utils.generate import hash_aa
 
 
