@@ -24,19 +24,19 @@ def duration(file: str,
              for_humans: bool = False) -> Union[float, str, int]:
   """Returns duration of the video file."""
   if for_humans:
-    mins, secs = divmod(vfc(file).duration, 60)
+    mins, secs = divmod(vfc(file, audio=False).duration, 60)
     hours, mins = divmod(mins, 60)
     return '%02d:%02d:%02d' % (hours, mins, secs)
   else:
-    return vfc(file).duration
+    return vfc(file, audio=False).duration
 
 
 def bitrate(file: str) -> int:
   """Returns bitrate of the video file."""
   # You can find the reference code here:
   # https://www.ezs3.com/public/What_bitrate_should_I_use_when_encoding_my_video_How_do_I_optimize_my_video_for_the_web.cfm
-  return (vfc(file).size[0] * vfc(file).size[1] *
-          (vfc(file).reader.nframes // vfc(file).duration) * 0.07 // 1000)
+  return (vfc(file, audio=False).size[0] * vfc(file, audio=False).size[1] *
+          (vfc(file, audio=False).reader.nframes // vfc(file, audio=False).duration) * 0.07 // 1000)
 
 
 def fps(file: str) -> Union[float, int]:
