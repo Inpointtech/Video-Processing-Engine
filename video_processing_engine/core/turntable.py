@@ -3,7 +3,6 @@
 import csv
 import json
 import os
-import time
 from typing import Union
 
 from video_processing_engine.core.capture.live import \
@@ -12,12 +11,9 @@ from video_processing_engine.core.process.compress import compress_video
 from video_processing_engine.core.process.trim import (trim_by_factor,
                                                        trim_num_parts,
                                                        trim_sample_section,
-                                                       trim_sub_sample)
-from video_processing_engine.utils.access import (download_from_azure,
-                                                  download_from_google_drive,
-                                                  download_from_url,
-                                                  download_using_ftp)
-from video_processing_engine.utils.aws import (access_file, create_s3_bucket,
+                                                       trim_sub_sample,
+                                                       trim_by_points)
+from video_processing_engine.utils.aws import (create_s3_bucket,
                                                upload_to_bucket)
 from video_processing_engine.utils.common import now
 from video_processing_engine.utils.generate import (bucket_name, order_name,
@@ -49,36 +45,9 @@ def spin(json_obj: Union[bytes, str]) -> None:
                        start)
     use_stored = json_data.get('use_stored', False)
     if use_stored:
-      print(
-          f'Accessing stored video via {json_data.get("access_mode", None)}.')
-      file_status = None
-      if json_data.get('access_mode', None) == 'url':
-        file_status, original_file = download_from_url(
-            json_data.get('public_url', None))
-      elif json_data.get('access_mode', None) == 'drive':
-        file_status, original_file = download_from_google_drive(
-            json_data.get('public_url', None))
-      elif json_data.get('access_mode', None) == 'azure':
-        file_status, original_file = download_from_azure(
-            json_data.get('azure_account_name', None),
-            json_data.get('azure_account_key', None),
-            json_data.get('azure_container_name', None),
-            json_data.get('azure_blob_name', None))
-      elif json_data.get('access_mode', None) == 'ftp':
-        file_status, original_file = download_using_ftp(
-            json_data.get('remote_username', None),
-            json_data.get('remote_password', None),
-            json_data.get('remote_public_address', None),
-            json_data.get('remote_file', None))
-      elif json_data.get('access_mode', None) == 's3':
-        file_status, original_file = access_file(
-            json_data.get('s3_access_key', None),
-            json_data.get('s3_secret_key', None),
-            json_data.get('s3_url', None),
-            json_data.get('s3_bucket_name', None))
-      elif json_data.get('access_mode', None) == 'teamviewer':
-        file_status, original_file = True, os.path.join(downloads,
-                                                        json_data.get('teamviewer_file', None))
+      original_file = os.path.join(downloads,
+                                   f'{json_data.get("stored_filename", None)}.mp4')
+      file_status = True
       if file_status is None:
         raise Exception('File not selected.')
     else:
@@ -144,6 +113,12 @@ def spin(json_obj: Union[bytes, str]) -> None:
           trim_upload = trim_sub_sample(final_file, start_time, end_time,
                                         sample_start_time, sample_end_time,
                                         timestamp_format)
+        elif json_data.get('trim_type', None) == 'trim_by_points':
+          start_time = json_data.get('point_start_time', 0)
+          end_time = json_data.get('point_end_time', 30)
+          trim_factor = json_data.get('trim_factor', 's')
+          trim_upload = trim_by_points(final_file, start_time, end_time,
+                                       trim_factor)
     elif perform_trimming:
       if json_data.get('trim_type', None) == 'trim_by_factor':
         clip_length = json_data.get('clip_length', 30)
@@ -166,6 +141,12 @@ def spin(json_obj: Union[bytes, str]) -> None:
         trim_upload = trim_sub_sample(final_file, start_time, end_time,
                                       sample_start_time, sample_end_time,
                                       timestamp_format)
+      elif json_data.get('trim_type', None) == 'trim_by_points':
+          start_time = json_data.get('point_start_time', 0)
+          end_time = json_data.get('point_end_time', 30)
+          trim_factor = json_data.get('trim_factor', 's')
+          trim_upload = trim_by_points(final_file, start_time, end_time,
+                                       trim_factor)
     upload_list.extend(trim_upload)
     print('Creating S3 bucket...')
     create_s3_bucket('',
@@ -188,5 +169,5 @@ def spin(json_obj: Union[bytes, str]) -> None:
       os.remove(file)
     print(f'Total time taken for processing this order is {now() - start}.')
   except Exception as error:
+    print(error)
     raise error
-

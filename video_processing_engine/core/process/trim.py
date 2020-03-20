@@ -3,7 +3,7 @@
 import os
 import random
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, Union
 
 from moviepy.editor import VideoFileClip as vfc
@@ -192,4 +192,36 @@ def trim_sub_sample(file: str,
   else:
     end = duration(file)
   trim_video(file, filename(file, idx), start, end, codec, preset, threads)
+  return filename(file, idx)
+
+
+def trim_by_points(file: str,
+                   start_time: int,
+                   end_time: int,
+                   factor: str = 's',
+                   codec: str = 'libx264',
+                   preset: str = 'ultrafast',
+                   threads: int = 15) -> str:
+  """Trim by starting minute OR starting seconds."""
+  idx = 1
+  _factor = 1 if factor == 's' else 60
+  total_limit = int(duration(file) / _factor)
+  if factor == 'p':
+    start_time = round((start_time / 100) * total_limit, 2)
+    end_time = round((end_time / 100) * total_limit, 2)
+    total_limit = 100
+  if end_time < start_time:
+    raise Exception('Ending time is less than starting time.')
+  else:
+    if end_time >= total_limit:
+      if factor == 'p':
+        print('Video doesn\'t have frame to process.')
+      else:
+        print('Video doesn\'t have frames to process and will max out.')
+      end_time = total_limit
+    elif start_time < 0:
+      print('Start should be greater than 0.')
+      start_time = 0
+    trim_video(file, filename(file, idx), start_time * _factor,
+               end_time * _factor, codec, preset, threads)
   return filename(file, idx)

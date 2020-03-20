@@ -174,6 +174,13 @@ def download_from_azure(account_name: str,
     return None, 'Error'
 
 
+def get_blob_url(account_name: str,
+                 container_name: str,
+                 blob_name: str) -> str:
+  """Get blob URL."""
+  return f'https://{account_name}.blob.core.windows.net/{container_name}/{blob_name}'
+
+
 def download_using_ftp(username: str,
                        password: str,
                        public_address: str,

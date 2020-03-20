@@ -8,7 +8,7 @@ from video_processing_engine.utils.local import quick_rename
 
 def calculate_cbr(file: str, ratio: int) -> str:
   """Calculates the required bitrate for compression."""
-  return str(int(b(file) * (100 - ratio)) / 100)
+  return str(int(b(file) * (100 - ratio)))
 
 
 def compress_video(file: str, ratio: int) -> str:
