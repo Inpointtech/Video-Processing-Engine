@@ -51,6 +51,14 @@ def check_usable_length(file: str,
   return True if duration(file) >= num_clips * minimum_length else False
 
 
+def new_bitrate(file: str) -> int:
+  """Returns bitrate of the video file."""
+  import subprocess
+
+  bit = subprocess.check_output(f"ffprobe -hide_banner -loglevel 0 -of flat -i '{file}' -select_streams v -show_entries 'format=bit_rate'", shell=True)
+  return int(bit.decode().replace('"', '').strip('format.bit_rate='))
+
+
 def all_stats(file: str) -> Tuple:
   """Returns all the statistics of the video file."""
   return (os.path.basename(file), duration(file, True), int(bitrate(file)),

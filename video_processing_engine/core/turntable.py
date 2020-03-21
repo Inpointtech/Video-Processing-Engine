@@ -142,15 +142,15 @@ def spin(json_obj: Union[bytes, str]) -> None:
                                        trim_factor)
     upload_list.extend(trim_upload)
     print('Creating S3 bucket...')
-    # create_s3_bucket('AKIAR4DHCUP262T3WIUX',
-    #                  'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-    #                  bucket_name=bucket)
+    create_s3_bucket('AKIAR4DHCUP262T3WIUX',
+                     'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
+                     bucket_name=bucket)
     print('Uploading trimmed videos onto S3 bucket...')
     for file in upload_list:
-      # url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
-      #                        'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-      #                        bucket, file)
-      # urls.append(url)
+      url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
+                             'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
+                             bucket, file)
+      urls.append(url)
     print('Exporting public URLs...')
     with open(os.path.join(reports_path, f'{bucket}.csv'),
               'a', encoding=dev.DEF_CHARSET) as csv_file:
