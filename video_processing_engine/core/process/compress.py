@@ -2,7 +2,7 @@
 
 import os
 
-from video_processing_engine.core.process.stats import bitrate as b
+from video_processing_engine.core.process.stats import bitrate as b, duration
 from video_processing_engine.utils.local import quick_rename
 
 
