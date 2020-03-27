@@ -23,9 +23,12 @@ def concate_videos(directory: str,
   Returns:
     Path where the concatenated file is created.
   """
-  files = [f"file '{os.path.join(directory, file)}'\n"
-           for file in os.listdir(directory)
+  files = [os.path.join(directory, file) for file in os.listdir(directory)
            if file_size(os.path.join(directory, file)) != '300.0 bytes']
+  files.sort(key=os.path.getctime)
+  files = [f"file '{file}'\n" for file in files
+           if not file.endswith('__init__.py')]
+  print(files)
   if len(os.listdir(directory)) == 0:
     return None
   if len(os.listdir(directory)) == 1:
@@ -40,7 +43,8 @@ def concate_videos(directory: str,
             f'{os.path.join(directory, f"{td()}.tmp_xa")} -vcodec copy '
             f'-acodec copy {output}')
   if delete_old_files:
-    temp = [os.path.join(directory, file) for file in os.listdir(directory)]
+    temp = [os.path.join(directory, file) for file in os.listdir(directory)
+            if not os.path.join(directory, file).endswith('__init__.py')]
     try:
       temp.remove(output)
     except ValueError:
@@ -48,3 +52,7 @@ def concate_videos(directory: str,
     for file in temp:
       os.remove(file)
   return output
+
+
+concate_videos(
+    '/home/xa/Desktop/video_processing_engine/video_processing_engine/live')
