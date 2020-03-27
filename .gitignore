@@ -128,9 +128,6 @@ dmypy.json
 tests/
 backup/
 /video_processing_engine/config/
-downloads/
-live/
-reports/
 docs/
 
 # Ignored on-device files
@@ -140,5 +137,7 @@ docs/
 /models/frozen_east_text_detection.pb
 /video_processing_engine/run.py
 vpe.code-workspace
-downloads/__init__.py
-live/__init__.py
+logs/*.log
+live/*.mp4
+downloads/*.mp4
+reports/*csv
