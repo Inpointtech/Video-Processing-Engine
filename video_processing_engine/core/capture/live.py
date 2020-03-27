@@ -13,9 +13,12 @@ from video_processing_engine.utils.common import (calculate_duration,
                                                   timestamp_dirname)
 from video_processing_engine.utils.generate import video_type
 from video_processing_engine.utils.local import filename
+from video_processing_engine.utils.logs import log
 from video_processing_engine.utils.opencv import (camera_live,
                                                   configure_camera_url)
-from video_processing_engine.utils.paths import live_path
+from video_processing_engine.utils.paths import live
+
+log = log(__file__)
 
 
 def ffmpeg_str(source: str,
@@ -50,7 +53,7 @@ def save_num_video(bucket_name: str,
                    camera_password: str = 'iamironman') -> None:
   """Saves "N" number of live video streams."""
   vid_type = video_type(True, True, True)
-  file = os.path.join(live_path, f'{bucket_name}{order_name}{vid_type}.mp4')
+  file = os.path.join(live, f'{bucket_name}{order_name}{vid_type}.mp4')
   for idx in range(1, num_of_clips + 1):
     file = filename(file, idx)
     url = configure_camera_url(
@@ -63,22 +66,20 @@ def start_live_recording(bucket_name: str,
                          start_time: str,
                          end_time: str,
                          camera_address: str,
-                         camera_username: str = 'admin',
+                         camera_username: str = 'xames3',
                          camera_password: str = 'iamironman',
                          camera_port: Union[int, str] = 554,
                          camera_timeout: Union[float, int] = 30.0,
-                         timestamp_format: str = '%H:%M:%S'
-                         ) -> Optional[str]:
+                         timestamp_format: str = '%H:%M:%S') -> Optional[str]:
   """Saves videos based on time duration."""
   run_date = datetime.now().strftime('%Y-%m-%d')
   start_time, end_time = f'{run_date} {start_time}', f'{run_date} {end_time}'
   duration = calculate_duration(start_time, end_time, timestamp_format, True)
-  force_close = datetime.strptime(end_time,
-                                  '%Y-%m-%d %H:%M:%S').replace(
-      tzinfo=timezone.utc).timestamp()
+  force_close = datetime.strptime(
+    end_time, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc).timestamp()
   vid_type = video_type(True, True, True)
-  temp_path = os.path.join(
-      live_path, f'{bucket_name}{order_name}_{timestamp_dirname()}')
+  temp_path = os.path.join(live,
+                           f'{bucket_name}{order_name}_{timestamp_dirname()}')
   if not os.path.isdir(temp_path):
     os.mkdir(temp_path)
   temp_file = os.path.join(temp_path,
@@ -91,6 +92,7 @@ def start_live_recording(bucket_name: str,
       while True:
         if camera_live(camera_address, camera_port, camera_timeout):
           file = filename(temp_file, idx)
+          log.info('Recording started for selected camera.')
           os.system(ffmpeg_str(url, file, duration, camera_timeout))
           stop_utc = now().replace(tzinfo=timezone.utc).timestamp()
           stop_secs = now().second
@@ -103,7 +105,9 @@ def start_live_recording(bucket_name: str,
             output = concate_videos(temp_path, delete_old_files=True)
             return output if os.path.isfile(output) else None
         else:
+          log.warning('Unable to record because of poor network connectivity.')
           slept_duration += camera_timeout
+          log.warning('Compensating lost time & attempting after 30 secs.')
           time.sleep(camera_timeout)
     except OSError:
       pass
@@ -114,17 +118,40 @@ def trigger_live_capture(bucket_name: str,
                          start_time: str,
                          end_time: str,
                          camera_address: str,
-                         camera_username: str = 'admin',
+                         camera_username: str = 'xames3',
                          camera_password: str = 'iamironman',
                          camera_port: Union[int, str] = 554,
                          camera_timeout: Union[float, int] = 30.0,
-                         timestamp_format: str = '%H:%M:%S'
-                         ) -> Optional[str]:
+                         timestamp_format: str = '%H:%M:%S') -> Optional[str]:
   """Starts video recording as per the triggering point."""
   run_date = datetime.now().strftime('%Y-%m-%d')
   _start_time = f'{run_date} {start_time}'
   while True:
     if str(now()) >= _start_time:
+      return start_live_recording(bucket_name, order_name, start_time,
+                                  end_time, camera_address, camera_username,
+                                  camera_password, camera_port, camera_timeout,
+                                  timestamp_format)
+    time.sleep(1.0)
+
+
+def trigger_utc_capture(bucket_name: str,
+                        order_name: str,
+                        start_time: str,
+                        end_time: str,
+                        camera_address: str,
+                        camera_username: str = 'xames3',
+                        camera_password: str = 'iamironman',
+                        camera_port: Union[int, str] = 554,
+                        camera_timeout: Union[float, int] = 30.0,
+                        timestamp_format: str = '%H:%M:%S') -> Optional[str]:
+  """Starts video recording as per the triggering point."""
+  run_date = datetime.now().strftime('%Y-%m-%d')
+  _start_time = f'{run_date} {start_time}'
+  _start_time = datetime.strptime(_start_time, '%Y-%m-%d %H:%M:%S')
+  _start_time = datetime.utcfromtimestamp(float(_start_time.strftime('%s')))
+  while True:
+    if str(now()) >= str(_start_time):
       return start_live_recording(bucket_name, order_name, start_time,
                                   end_time, camera_address, camera_username,
                                   camera_password, camera_port, camera_timeout,

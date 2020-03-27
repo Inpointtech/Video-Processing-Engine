@@ -1,13 +1,9 @@
 """Utility for filtering S3 objects."""
 
 import os
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
-from video_processing_engine.utils.generate import (unhash_a, unhash_aa,
-                                                    unhash_aaa,
-                                                    unhash_area_code,
+from video_processing_engine.utils.generate import (unhash_area_code,
                                                     unhash_country_code,
                                                     unhash_timestamp)
 

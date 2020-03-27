@@ -6,9 +6,12 @@ import subprocess
 from datetime import datetime
 from typing import Optional, Union
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
+import pytz
+
+from video_processing_engine.utils.logs import log
 from video_processing_engine.vars import dev
+
+log = log(__file__)
 
 
 def check_internet(timeout: Optional[Union[float, int]] = 10.0) -> bool:
@@ -17,15 +20,22 @@ def check_internet(timeout: Optional[Union[float, int]] = 10.0) -> bool:
   # https://gist.github.com/yasinkuyu/aa505c1f4bbb4016281d7167b8fa2fc2
   try:
     socket.create_connection((dev.PING_URL, dev.PING_PORT), timeout=timeout)
+    log.info('Internet connection available.')
     return True
   except OSError:
     pass
+  log.warning('Internet connection unavailable.')
   return False
 
 
 def now() -> datetime:
   """Return current time without microseconds."""
   return datetime.now().replace(microsecond=0)
+
+
+def utc_now() -> datetime:
+  """Return UTC time without microseconds."""
+  return datetime.now(pytz.utc).replace(microsecond=0)
 
 
 def toast(title: str, message: str) -> None:
@@ -41,8 +51,6 @@ def toast(title: str, message: str) -> None:
   Notes:
     This function needs to be used only for the purpose of debugging
     code. Kindly use sparingly.
-
-  TODO(xames3): Add support for Windows based notifications.
   """
   if os.name == 'nt':
     print(f'{title}:\n{message}')

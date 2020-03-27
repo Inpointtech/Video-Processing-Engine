@@ -2,13 +2,14 @@
 
 import time
 from datetime import datetime
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
+from video_processing_engine.utils.logs import log
 from video_processing_engine.utils.hasher import (h_17k, h_26, h_676, h_area,
                                                   h_country)
-from video_processing_engine.utils.exceptions import BucketNameZeroError, HashValueHasZeroError, HashValueLimitExceedError
+from video_processing_engine.utils import exceptions
+
+log = log(__file__)
 
 
 def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
@@ -29,13 +30,13 @@ def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
   """
   try:
     if unique_id > 26:
-      raise HashValueLimitExceedError
+      raise exceptions.HashValueLimitExceedError
     if unique_id == 0:
-      raise HashValueHasZeroError
-  except HashValueLimitExceedError as error:
-    print(f'HashValueLimitExceedError: {error}')
-  except HashValueHasZeroError as error:
-    print(f'HashValueHasZeroError: {error}')
+      raise exceptions.HashValueHasZeroError
+  except exceptions.HashValueLimitExceedError as error:
+    log.error(f'HashValueLimitExceedError: {error}')
+  except exceptions.HashValueHasZeroError as error:
+    log.error(f'HashValueHasZeroError: {error}')
   finally:  
     return h_26.get(int(unique_id), None)
 
@@ -59,13 +60,13 @@ def hash_aa(unique_id: Union[int, float, str]) -> Optional[str]:
   """
   try:
     if unique_id > 676:
-      raise HashValueLimitExceedError
+      raise exceptions.HashValueLimitExceedError
     if unique_id == 0:
-      raise HashValueHasZeroError
-  except HashValueLimitExceedError as error:
-    print(f'HashValueLimitExceedError: {error}')
-  except HashValueHasZeroError as error:
-    print(f'HashValueHasZeroError: {error}')
+      raise exceptions.HashValueHasZeroError
+  except exceptions.HashValueLimitExceedError as error:
+    log.error(f'HashValueLimitExceedError: {error}')
+  except exceptions.HashValueHasZeroError as error:
+    log.error(f'HashValueHasZeroError: {error}')
   finally:
     return h_676.get(int(unique_id), None)
 
@@ -88,7 +89,17 @@ def hash_aaa(unique_id: Union[int, float, str]) -> Optional[str]:
   Notes:
     Values greater than 17576 will return None.
   """
-  return h_17k.get(int(unique_id), None)
+  try:
+    if unique_id > 17576:
+      raise exceptions.HashValueLimitExceedError
+    if unique_id == 0:
+      raise exceptions.HashValueHasZeroError
+  except exceptions.HashValueLimitExceedError as error:
+    log.error(f'HashValueLimitExceedError: {error}')
+  except exceptions.HashValueHasZeroError as error:
+    log.error(f'HashValueHasZeroError: {error}')
+  finally:
+    return h_17k.get(int(unique_id), None)
 
 
 def hash_area_code(area: str) -> Optional[str]:
@@ -110,15 +121,16 @@ def hash_area_code(area: str) -> Optional[str]:
   try:
     return dict(map(reversed, h_area.items()))[area]
   except (KeyError, ValueError):
+    log.error('KeyError or ValueError was raised.')
     return None
 
 
 def hash_country_code(country_code: str) -> str:
   """Return hashed country code."""
-  return h_country.get(country_code, 'xx')
+  return h_country.get(country_code, 'xa')
 
 
-def hash_timestamp(now: Optional[datetime] = None) -> str:
+def hash_timestamp(now: datetime = None) -> str:
   """Return converted timestamp.
 
   Generate 'hashed' timestamp for provided instance in 'MMDDYYHHmmSS'.
@@ -161,9 +173,9 @@ def bucket_name(country_code: str,
   """
   try:
     if customer_id == 0 or contract_id == 0 or order_id == 0:
-      raise BucketNameZeroError
-  except BucketNameZeroError as error:
-    print(f'BucketNameError: {error}')
+      raise exceptions.BucketNameZeroError
+  except exceptions.BucketNameZeroError as error:
+    log.error(f'BucketNameError: {error}')
     return None
   else:
     return '{}{:0>4}{:0>2}{:0>2}'.format(hash_country_code(country_code),
@@ -194,9 +206,9 @@ def order_name(store_id: Union[int, float, str],
   """
   try:
     if store_id == 0 or camera_id == 0:
-      raise BucketNameError(6901)
-  except BucketNameError as error:
-    print(f'BucketNameError: {error.errors[6901]}')
+      raise exceptions.OrderNameZeroError
+  except exceptions.OrderNameZeroError as error:
+    log.error(f'OrderNameZeroError: {error}')
     return None
   else:
     return '{:0>5}{}{:0>2}{}'.format(int(store_id), area_code,
@@ -248,6 +260,7 @@ def unhash_a(value: str) -> Optional[str]:
   try:
     return str(dict(map(reversed, h_26.items()))[value])
   except (KeyError, ValueError):
+    log.error('KeyError or ValueError was raised.')
     return None
 
 
@@ -270,6 +283,7 @@ def unhash_aa(value: str) -> Optional[str]:
   try:
     return str(dict(map(reversed, h_676.items()))[value])
   except (KeyError, ValueError):
+    log.error('KeyError or ValueError was raised.')
     return None
 
 
@@ -292,6 +306,7 @@ def unhash_aaa(value: str) -> Optional[str]:
   try:
     return str(dict(map(reversed, h_17k.items()))[value])
   except (KeyError, ValueError):
+    log.error('KeyError or ValueError was raised.')
     return None
 
 
@@ -305,13 +320,13 @@ def unhash_country_code(hashed_code: str) -> Optional[str]:
   try:
     return dict(map(reversed, h_country.items()))[hashed_code]
   except (KeyError, ValueError):
+    log.error('KeyError or ValueError was raised.')
     return None
 
 
 def unhash_timestamp(hashed_timestamp: str,
                      timestamp_format: str = '%m%d%y%H%M%S',
-                     unix_time: bool = False
-                     ) -> Union[datetime, float]:
+                     unix_time: bool = False) -> Union[datetime, float]:
   """Returns unhashed timestamp value.
 
   Returns the unhashed timestamp as per requirement.

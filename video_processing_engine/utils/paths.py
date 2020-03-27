@@ -11,13 +11,12 @@ from video_processing_engine.vars import models
 parent_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 # Models used in the video processing engine.
-models_path = os.path.join(parent_path, 'models')
-caffe_model = os.path.join(models_path, models.FACE_CAFFEMODEL)
-prototext = os.path.join(models_path, models.FACE_PROTOTEXT)
+models = os.path.join(parent_path, 'models')
 
 # Path where all the downloaded files are stored.
 downloads = os.path.join(parent_path, 'downloads')
 
 # Other paths
-live_path = os.path.join(parent_path, 'live')
-reports_path = os.path.join(parent_path, 'reports')
+live = os.path.join(parent_path, 'live')
+reports = os.path.join(parent_path, 'reports')
+logs = os.path.join(parent_path, 'logs')

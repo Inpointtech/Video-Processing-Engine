@@ -1,8 +1,5 @@
 """Utility for interacting with the database."""
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
-# pyright: reportMissingImports=false
 import pandas as pd
 import psycopg2 as pg
 

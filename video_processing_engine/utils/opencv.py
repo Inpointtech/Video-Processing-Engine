@@ -3,13 +3,14 @@
 import socket
 from typing import Any, List, Optional, Tuple, Union
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
 import cv2
 import imutils
 import numpy as np
 
 from video_processing_engine.vars.color import green, yellow
+from video_processing_engine.utils.logs import log
+
+log = log(__file__)
 
 
 def rescale(frame: np.ndarray,
@@ -148,7 +149,9 @@ def camera_live(camera_address: str,
   try:
     camera_port = int(camera_port)
     socket.create_connection((camera_address, camera_port), timeout = timeout)
+    log.info('Camera connected to the network')
     return True
   except OSError:
     pass
+  log.warning('Camera not connected to any network')
   return False

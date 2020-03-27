@@ -9,18 +9,20 @@ class VideoProcessingEngineError(Exception):
 
 
 class BucketNameZeroError(VideoProcessingEngineError):
-  def __str__(self):
-    return ('Bucket name index must not start from 0. '
-            f'Exception raised at {now()}.')
+  def __str__(self) -> str:
+    return 'Bucket name index must not start from 0.'
+
+
+class OrderNameZeroError(VideoProcessingEngineError):
+  def __str__(self) -> str:
+    return 'Order name index must not start from 0.'
 
 
 class HashValueHasZeroError(VideoProcessingEngineError):
-  def __str__(self):
-    return ('Hash value cannot be 0. '
-            f'Exception raised at {now()}.')
+  def __str__(self) -> str:
+    return 'Hash value cannot be 0.'
 
 
 class HashValueLimitExceedError(VideoProcessingEngineError):
-  def __str__(self):
-    return ('Hash value exceeded it\'s limits. '
-            f'Exception raised at {now()}.')
+  def __str__(self) -> str:
+    return 'Hash value exceeded it\'s limits.'

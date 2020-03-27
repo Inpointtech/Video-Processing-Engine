@@ -28,9 +28,11 @@ def filename_from_url(public_url: str) -> str:
   """
   url_path = urlsplit(public_url).path
   basename = os.path.basename(unquote(url_path))
-  if (os.path.basename(basename) != basename or
-          unquote(os.path.basename(url_path)) != basename):
-    raise ValueError('URL has invalid characters. Cannot parse the same.')
+  if (os.path.basename(basename)
+      != basename
+      or unquote(os.path.basename(url_path))
+      != basename):
+    raise ValueError('[e] URL has invalid characters. Cannot parse the same.')
   return basename
 
 
@@ -68,7 +70,7 @@ def download_from_url(public_url: str,
       file.write(download_item.content)
       return True, os.path.join(download_path, filename)
   except (RequestError, RequestException):
-    return None, 'Error'
+    return None, '[e] Error while downloading file'
 
 
 def fetch_confirm_token(response: requests.Response):
@@ -125,7 +127,7 @@ def download_from_google_drive(shareable_url: str,
           file.write(chunk)
       return True, os.path.join(download_path, f'{filename}.mp4')
   except (RequestError, RequestException):
-    return None, 'Error'
+    return None, '[e] Error while downloading file'
 
 
 def generate_connection_string(account_name: str,
@@ -171,7 +173,7 @@ def download_from_azure(account_name: str,
       data.readinto(file)
       return True, os.path.join(download_path, f'{filename}.mp4')
   except Exception:
-    return None, 'Error'
+    return None, '[e] Error while downloading file'
 
 
 def get_blob_url(account_name: str,
@@ -207,4 +209,4 @@ def download_using_ftp(username: str,
               f'{username}@{public_address}:{remote_file} {download_path}')
     return True, os.path.join(download_path, os.path.basename(remote_file))
   except OSError:
-    return None, 'Error'
+    return None, '[e] Error while downloading file'

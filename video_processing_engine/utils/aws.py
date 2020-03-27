@@ -3,12 +3,14 @@
 import os
 from typing import List, Optional, Tuple
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
+from video_processing_engine.utils.common import file_size as fz
+from video_processing_engine.utils.logs import log
 from video_processing_engine.utils.paths import downloads
+
+log = log(__file__)
 
 
 def create_s3_bucket(access_key: str,
@@ -36,13 +38,15 @@ def create_s3_bucket(access_key: str,
                       aws_secret_access_key=secret_key,
                       region_name=region)
   except (ClientError, NoCredentialsError):
+    log.error('Wrong credentials used to access the AWS account.')
     return False
   else:
     location = {'LocationConstraint': region}
     try:
       s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
+      log.info('New bucket created on Amazon S3 storage.')
     except:
-      pass
+      log.warning('Bucket already exist, skipped bucket creation.')
     return True
 
 
@@ -70,6 +74,7 @@ def upload_to_bucket(access_key: str,
                       aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key)
   except (ClientError, NoCredentialsError):
+    log.error('Wrong credentials used to access the AWS account.')
     return None
   else:
     if s3_name is None:
@@ -81,6 +86,7 @@ def upload_to_bucket(access_key: str,
         s3.upload_file(filename, bucket_name, s3_name,
                        ExtraArgs={'ACL': 'public-read',
                                   'ContentType': 'video/mp4'})
+        log.info(f'{s3_name} file uploaded on to Amazon S3 bucket.')
         return generate_s3_url(bucket_name, s3_name)
 
 
@@ -106,7 +112,7 @@ def check_file(access_key: str,
                bucket_name: str = None) -> Optional[List]:
   """Return boolean status, bucket and filename.
 
-  Checks if the file is available on S3 bucke and returns bucket and
+  Checks if the file is available on S3 bucket and returns bucket and
   filename.
 
   Args:
@@ -123,12 +129,14 @@ def check_file(access_key: str,
                       aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key)
   except (ClientError, NoCredentialsError):
+    log.error('Wrong credentials used to access the AWS account.')
     return None
   else:
     if bucket_name is None:
       bucket_name = s3_url.split('//')[1].split('.')[0]
     s3_file = s3_url.split('.amazonaws.com/')[1]
-    return ['Contents' in s3.list_objects(Bucket=bucket_name, Prefix=s3_file),
+    return ['Contents' in s3.list_objects(Bucket=bucket_name,
+                                          Prefix=s3_file),
             bucket_name,
             s3_file]
 
@@ -168,10 +176,10 @@ def access_file(access_key: str,
 
 
 def access_file_update(access_key: str,
-                secret_key: str,
-                s3_url: str,
-                file_name: str,
-                bucket_name: str = None) -> Tuple:
+                       secret_key: str,
+                       s3_url: str,
+                       file_name: str,
+                       bucket_name: str = None) -> Tuple:
   """Access file from S3 bucket.
 
   Access and download file from S3 bucket.
@@ -192,15 +200,24 @@ def access_file_update(access_key: str,
                       aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key)
   except (ClientError, NoCredentialsError):
-    return None, 'Error'
+    log.error('Wrong credentials used to access the AWS account.')
+    return None, '[e] Error while downloading file'
   else:
     [*status, bucket, file] = check_file(access_key, secret_key,
                                          s3_url, bucket_name)
     if status[0]:
-      s3.download_file(bucket, file, os.path.join(downloads, f'{file_name}.mp4'))
+      s3.download_file(bucket,
+                       file,
+                       os.path.join(downloads, f'{file_name}.mp4'))
+      log.info(f'File "{file_name}.mp4" downloaded from Amazon S3 storage.')
+      if fz(os.path.join(downloads, f'{file_name}.mp4')).endswith('KB'):
+        log.error('Unusable file downloaded since file size is in KBs.')
+        return None, '[w] Unusable file downloaded.'
       return True, os.path.join(downloads, f'{file_name}.mp4')
     else:
-      return None, 'Error'
+      log.error('File download from Amazon S3 failed because of poor network '
+                'connectivity.')
+      return None, '[e] Error while downloading file'
 
 
 def save_file(bucket_name: str, filename: str) -> str:
@@ -236,6 +253,7 @@ def copy_file_from_bucket(access_key: str,
                         aws_access_key_id=access_key,
                         aws_secret_access_key=secret_key)
   except (ClientError, NoCredentialsError):
+    log.error('Wrong credentials used to access the AWS account.')
     return None
   else:
     copy_source = {
