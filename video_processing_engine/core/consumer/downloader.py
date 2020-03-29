@@ -1,15 +1,17 @@
+"""A subservice for downloading files."""
+
+import logging
 import json
 import os
+from typing import Union
 
 import pika
 
 from video_processing_engine.utils.aws import access_file_update
-from video_processing_engine.utils.downloads import (
+from video_processing_engine.utils.fetch import (
     download_from_azure, download_from_google_drive, download_using_ftp)
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.paths import downloads
-
-log = log(__file__)
 
 
 def pika_connect():
@@ -20,11 +22,11 @@ def pika_connect():
                               virtual_host='testvm'))
   channel = connection.channel()
   channel.queue_declare(queue='file-transfer-Q')
-  log.info('Pika connection established.')
   return channel
 
 
-def compute(json_obj):
+def compute(json_obj: Union[bytes, str], log: logging.Logger = None):
+  log = _log(__file__) if log is None else log
   json_data = json.loads(json_obj)
   if json_data.get('access_type', None) == 'GCP':
     log.info('Download file via Google Drive.')
@@ -56,7 +58,8 @@ def compute(json_obj):
     os.path.join(downloads, json_data.get('stored_filename', None))
 
 
-def callback(channel, method, properties, body):
+def callback(channel, method, properties, body, log: logging.Logger = None):
+  log = _log(__file__) if log is None else log
   log.info(f'Received: {body}')
   compute(body)
 
@@ -68,6 +71,7 @@ channel.basic_consume(queue='file-transfer-Q',
 
 
 def consume():
+  log = _log(__file__)
   global channel
   try:
     channel.start_consuming()

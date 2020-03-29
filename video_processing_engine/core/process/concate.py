@@ -28,7 +28,6 @@ def concate_videos(directory: str,
   files.sort(key=os.path.getctime)
   files = [f"file '{file}'\n" for file in files
            if not file.endswith('__init__.py')]
-  print(files)
   if len(os.listdir(directory)) == 0:
     return None
   if len(os.listdir(directory)) == 1:
@@ -52,7 +51,3 @@ def concate_videos(directory: str,
     for file in temp:
       os.remove(file)
   return output
-
-
-concate_videos(
-    '/home/xa/Desktop/video_processing_engine/video_processing_engine/live')

@@ -1,5 +1,6 @@
-"""Utility to download files from Google Drive, Azure and FTP."""
+"""Utility to fetch files from Google Drive, Azure and FTP."""
 
+import logging
 import os
 from typing import Tuple
 from urllib.parse import unquote, urlsplit
@@ -10,11 +11,9 @@ from requests.exceptions import RequestException
 from urllib3.exceptions import RequestError
 
 from video_processing_engine.utils.common import file_size as fz
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.paths import downloads
 from video_processing_engine.vars import dev
-
-log = log(__file__)
 
 
 def filename_from_url(public_url: str) -> str:
@@ -86,7 +85,8 @@ def fetch_confirm_token(response: requests.Response):
 
 def download_from_google_drive(shareable_url: str,
                                file_name: str,
-                               download_path: str = downloads) -> Tuple:
+                               download_path: str = downloads,
+                               log: logging.Logger = None) -> Tuple:
   """Downloads file from the shareable url.
 
   Downloads file from shareable url and saves it in downloads folder.
@@ -110,6 +110,7 @@ def download_from_google_drive(shareable_url: str,
   """
   # You can find the reference code here:
   # https://stackoverflow.com/a/39225272
+  log = _log(__file__) if log is None else log
   try:
     file_id = shareable_url.split('https://drive.google.com/open?id=')[1]
     session = requests.Session()
@@ -152,7 +153,8 @@ def download_from_azure(account_name: str,
                         container_name: str,
                         blob_name: str,
                         file_name: str,
-                        download_path: str = downloads) -> Tuple:
+                        download_path: str = downloads,
+                        log: logging.Logger = None) -> Tuple:
   """Download file from Microsoft Azure.
 
   Download file from Microsoft Azure and store it in downloads folder.
@@ -170,6 +172,7 @@ def download_from_azure(account_name: str,
   """
   # You can find the reference code here:
   # https://pypi.org/project/azure-storage-blob/
+  log = _log(__file__) if log is None else log
   try:
     connection_string = generate_connection_string(account_name, account_key)
     blob = BlobClient.from_connection_string(conn_str=connection_string,
@@ -202,7 +205,8 @@ def download_using_ftp(username: str,
                        public_address: str,
                        remote_file: str,
                        file_name: str,
-                       download_path: str = downloads) -> Tuple:
+                       download_path: str = downloads,
+                       log: logging.Logger = None) -> Tuple:
   """Download/fetch/transfer file using OpenSSH via FTP.
 
   Fetch file from remote machine to store it in downloads folder.
@@ -219,6 +223,7 @@ def download_using_ftp(username: str,
   """
   # You can find the reference code here:
   # https://stackoverflow.com/a/56850195
+  log = _log(__file__) if log is None else log
   try:
     os.system(f'sshpass -p {password} scp -o StrictHostKeyChecking=no '
               f'{username}@{public_address}:{remote_file} {download_path}')

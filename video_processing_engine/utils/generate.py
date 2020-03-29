@@ -1,18 +1,18 @@
 """Utility for generating strings and filename."""
 
+import logging
 import time
 from datetime import datetime
 from typing import Optional, Union
 
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils import exceptions
 from video_processing_engine.utils.hasher import (h_17k, h_26, h_676, h_area,
                                                   h_country)
-from video_processing_engine.utils import exceptions
-
-log = log(__file__)
+from video_processing_engine.utils.logs import log as _log
 
 
-def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
+def hash_a(unique_id: Union[int, float, str],
+           log: logging.Logger = None) -> Optional[str]:
   """Return hashed string code for single unique id from a - z.
 
   The unique id is fetched from the database and should range from 
@@ -28,6 +28,7 @@ def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
   Notes:
     Values greater than 26 will return None.
   """
+  log = _log(__file__) if log is None else log
   try:
     if unique_id > 26:
       raise exceptions.HashValueLimitExceedError
@@ -41,7 +42,8 @@ def hash_a(unique_id: Union[int, float, str]) -> Optional[str]:
     return h_26.get(int(unique_id), None)
 
 
-def hash_aa(unique_id: Union[int, float, str]) -> Optional[str]:
+def hash_aa(unique_id: Union[int, float, str],
+            log: logging.Logger = None) -> Optional[str]:
   """Return hashed string code for the double unique ids from aa - zz.
 
   The unique id is fetched from the database and should range from 
@@ -58,6 +60,7 @@ def hash_aa(unique_id: Union[int, float, str]) -> Optional[str]:
   Notes:
     Values greater than 676 will return None.
   """
+  log = _log(__file__) if log is None else log
   try:
     if unique_id > 676:
       raise exceptions.HashValueLimitExceedError
@@ -71,7 +74,8 @@ def hash_aa(unique_id: Union[int, float, str]) -> Optional[str]:
     return h_676.get(int(unique_id), None)
 
 
-def hash_aaa(unique_id: Union[int, float, str]) -> Optional[str]:
+def hash_aaa(unique_id: Union[int, float, str],
+             log: logging.Logger = None) -> Optional[str]:
   """Return hashed string code for single unique id from aaa - zzz.
 
   The unique id is fetched from the database and should range from 
@@ -89,6 +93,7 @@ def hash_aaa(unique_id: Union[int, float, str]) -> Optional[str]:
   Notes:
     Values greater than 17576 will return None.
   """
+  log = _log(__file__) if log is None else log
   try:
     if unique_id > 17576:
       raise exceptions.HashValueLimitExceedError
@@ -102,7 +107,7 @@ def hash_aaa(unique_id: Union[int, float, str]) -> Optional[str]:
     return h_17k.get(int(unique_id), None)
 
 
-def hash_area_code(area: str) -> Optional[str]:
+def hash_area_code(area: str, log: logging.Logger = None) -> Optional[str]:
   """Return hashed string code.
 
   Args:
@@ -118,6 +123,7 @@ def hash_area_code(area: str) -> Optional[str]:
     KeyError: If the key is not found.
     ValueError: If the value is not found.
   """
+  log = _log(__file__) if log is None else log
   try:
     return dict(map(reversed, h_area.items()))[area]
   except (KeyError, ValueError):
@@ -130,7 +136,7 @@ def hash_country_code(country_code: str) -> str:
   return h_country.get(country_code, 'xa')
 
 
-def hash_timestamp(now: datetime = None) -> str:
+def hash_timestamp(now: datetime = None, log: logging.Logger = None) -> str:
   """Return converted timestamp.
 
   Generate 'hashed' timestamp for provided instance in 'MMDDYYHHmmSS'.
@@ -141,12 +147,13 @@ def hash_timestamp(now: datetime = None) -> str:
   Returns:
     Hashed timestamp in MMDDYYHHmmSS.
   """
+  log = _log(__file__) if log is None else log
   if now is None:
     now = datetime.now().replace(microsecond=0)
-  return '{}{:0>2}{:0>2}{}{:0>2}{:0>2}'.format(hash_a(now.month),
+  return '{}{:0>2}{:0>2}{}{:0>2}{:0>2}'.format(hash_a(now.month, log),
                                                str(now.day),
                                                str(now.year)[2:],
-                                               hash_a(now.hour + 1),
+                                               hash_a(now.hour + 1, log),
                                                str(now.minute),
                                                str(now.second))
 
@@ -154,7 +161,8 @@ def hash_timestamp(now: datetime = None) -> str:
 def bucket_name(country_code: str,
                 customer_id: Union[int, float, str],
                 contract_id: Union[int, float, str],
-                order_id: Union[int, float, str]) -> Optional[str]:
+                order_id: Union[int, float, str],
+                log: logging.Logger = None) -> Optional[str]:
   """Generate an unique bucket name.
 
   The generated name represents the hierarchy of the stored video.
@@ -171,6 +179,7 @@ def bucket_name(country_code: str,
   Raises:
     TypeError: If any positional arguments are skipped.
   """
+  log = _log(__file__) if log is None else log
   try:
     if customer_id == 0 or contract_id == 0 or order_id == 0:
       raise exceptions.BucketNameZeroError
@@ -187,7 +196,8 @@ def bucket_name(country_code: str,
 def order_name(store_id: Union[int, float, str],
                area_code: str,
                camera_id: Union[int, float, str],
-               timestamp: Optional[datetime] = None) -> Optional[str]:
+               timestamp: Optional[datetime] = None,
+               log: logging.Logger = None) -> Optional[str]:
   """Generate an unique order name.
 
   Generate an unique string based on order details.
@@ -204,6 +214,7 @@ def order_name(store_id: Union[int, float, str],
   Raises:
     TypeError: If any positional arguments are skipped.
   """
+  log = _log(__file__) if log is None else log
   try:
     if store_id == 0 or camera_id == 0:
       raise exceptions.OrderNameZeroError
@@ -212,7 +223,8 @@ def order_name(store_id: Union[int, float, str],
     return None
   else:
     return '{:0>5}{}{:0>2}{}'.format(int(store_id), area_code,
-                                     int(camera_id), hash_timestamp(timestamp))
+                                     int(camera_id), hash_timestamp(timestamp,
+                                                                    log))
 
 
 def video_type(compress: bool = False,
@@ -241,7 +253,7 @@ def video_type(compress: bool = False,
   return ''.join(temp)
 
 
-def unhash_a(value: str) -> Optional[str]:
+def unhash_a(value: str, log: logging.Logger = None) -> Optional[str]:
   """Return unhashed number from range 1 - 26.
 
   This function converts the `hashed string` value back to it's numeric
@@ -257,6 +269,7 @@ def unhash_a(value: str) -> Optional[str]:
     KeyError: If an invalid value is passed for unhashing.
     ValueError: If the value to be unhashed is greater than the range.
   """
+  log = _log(__file__) if log is None else log
   try:
     return str(dict(map(reversed, h_26.items()))[value])
   except (KeyError, ValueError):
@@ -264,7 +277,7 @@ def unhash_a(value: str) -> Optional[str]:
     return None
 
 
-def unhash_aa(value: str) -> Optional[str]:
+def unhash_aa(value: str, log: logging.Logger = None) -> Optional[str]:
   """Return unhashed number from range 1 - 676.
 
   Similar to unhash_a(), this function converts the `hashed string`
@@ -280,6 +293,7 @@ def unhash_aa(value: str) -> Optional[str]:
     KeyError: If an invalid value is passed for unhashing.
     ValueError: If the value to be unhashed is greater than the range.
   """
+  log = _log(__file__) if log is None else log
   try:
     return str(dict(map(reversed, h_676.items()))[value])
   except (KeyError, ValueError):
@@ -287,7 +301,7 @@ def unhash_aa(value: str) -> Optional[str]:
     return None
 
 
-def unhash_aaa(value: str) -> Optional[str]:
+def unhash_aaa(value: str, log: logging.Logger = None) -> Optional[str]:
   """Return unhashed number from range 1 - 17576.
 
   Similar to unhash_a(), this function converts the `hashed string`
@@ -303,6 +317,7 @@ def unhash_aaa(value: str) -> Optional[str]:
     KeyError: If an invalid value is passed for unhashing.
     ValueError: If the value to be unhashed is greater than the range.
   """
+  log = _log(__file__) if log is None else log
   try:
     return str(dict(map(reversed, h_17k.items()))[value])
   except (KeyError, ValueError):
@@ -310,13 +325,16 @@ def unhash_aaa(value: str) -> Optional[str]:
     return None
 
 
-def unhash_area_code(area_code: str) -> Optional[str]:
+def unhash_area_code(area_code: str,
+                     log: logging.Logger = None) -> Optional[str]:
   """Return unhashed area code."""
   return h_area.get(area_code, None)
 
 
-def unhash_country_code(hashed_code: str) -> Optional[str]:
+def unhash_country_code(hashed_code: str,
+                        log: logging.Logger = None) -> Optional[str]:
   """Return unhashed country code."""
+  log = _log(__file__) if log is None else log
   try:
     return dict(map(reversed, h_country.items()))[hashed_code]
   except (KeyError, ValueError):
@@ -326,7 +344,8 @@ def unhash_country_code(hashed_code: str) -> Optional[str]:
 
 def unhash_timestamp(hashed_timestamp: str,
                      timestamp_format: str = '%m%d%y%H%M%S',
-                     unix_time: bool = False) -> Union[datetime, float]:
+                     unix_time: bool = False,
+                     log: logging.Logger = None) -> Union[datetime, float]:
   """Returns unhashed timestamp value.
 
   Returns the unhashed timestamp as per requirement.
@@ -339,9 +358,10 @@ def unhash_timestamp(hashed_timestamp: str,
   Returns:
     Datetime object or a Unix time (float) value of the hashed time.
   """
+  log = _log(__file__) if log is None else log
   temp = hashed_timestamp.replace(hashed_timestamp[0],
-                                  unhash_a(hashed_timestamp[0]))
-  temp = temp.replace(temp[5], str(int(unhash_a(hashed_timestamp[5])) - 1))
+                                  unhash_a(hashed_timestamp[0], log))
+  temp = temp.replace(temp[5], str(int(unhash_a(hashed_timestamp[5], log)) - 1))
   if unix_time:
     return time.mktime(datetime.strptime(temp, timestamp_format).timetuple())
   else:

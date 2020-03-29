@@ -1,5 +1,6 @@
 """Utility for making convenient use of OpenCV."""
 
+import logging
 import socket
 from typing import Any, List, Optional, Tuple, Union
 
@@ -8,9 +9,9 @@ import imutils
 import numpy as np
 
 from video_processing_engine.vars.color import green, yellow
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils.logs import log as _log
 
-log = log(__file__)
+# log = log(__file__)
 
 
 def rescale(frame: np.ndarray,
@@ -142,10 +143,12 @@ def draw_centroid(frame: np.ndarray,
 
 def camera_live(camera_address: str,
                 camera_port: Union[int, str] = 554,
-                timeout: Optional[Union[float, int]] = 10.0) -> bool:
+                timeout: Optional[Union[float, int]] = 10.0,
+                log: logging.Logger = None) -> bool:
   """Check if any camera connectivity is available."""
   # You can find the reference code here:
   # https://gist.github.com/yasinkuyu/aa505c1f4bbb4016281d7167b8fa2fc2
+  log = _log(__file__) if log is None else log
   try:
     camera_port = int(camera_port)
     socket.create_connection((camera_address, camera_port), timeout = timeout)

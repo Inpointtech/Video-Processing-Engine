@@ -1,5 +1,6 @@
 """Utility for working with AWS using boto3."""
 
+import logging
 import os
 from typing import List, Optional, Tuple
 
@@ -7,16 +8,15 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
 from video_processing_engine.utils.common import file_size as fz
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.paths import downloads
-
-log = log(__file__)
 
 
 def create_s3_bucket(access_key: str,
                      secret_key: str,
                      bucket_name: str,
-                     region: str = 'ap-south-1') -> bool:
+                     region: str = 'ap-south-1',
+                     log: logging.Logger = None) -> bool:
   """Create an S3 bucket.
 
   Create an S3 bucket in a specified region.
@@ -32,6 +32,7 @@ def create_s3_bucket(access_key: str,
   Returns:
     Boolean value, True if bucket created.
   """
+  log = _log(__file__) if log is None else log
   try:
     s3 = boto3.client('s3',
                       aws_access_key_id=access_key,
@@ -54,7 +55,8 @@ def upload_to_bucket(access_key: str,
                      secret_key: str,
                      bucket_name: str,
                      filename: str,
-                     s3_name: str = None) -> Optional[str]:
+                     s3_name: str = None,
+                     log: logging.Logger = None) -> Optional[str]:
   """Upload file to S3 bucket.
 
   Uploads file to the S3 bucket and returns it's public IP address.
@@ -69,6 +71,7 @@ def upload_to_bucket(access_key: str,
   Returns:
     Public IP address of the uploaded file.
   """
+  log = _log(__file__) if log is None else log
   try:
     s3 = boto3.client('s3',
                       aws_access_key_id=access_key,
@@ -109,7 +112,8 @@ def generate_s3_url(bucket_name: str, s3_name: str) -> str:
 def check_file(access_key: str,
                secret_key: str,
                s3_url: str,
-               bucket_name: str = None) -> Optional[List]:
+               bucket_name: str = None,
+               log: logging.Logger = None) -> Optional[List]:
   """Return boolean status, bucket and filename.
 
   Checks if the file is available on S3 bucket and returns bucket and
@@ -124,6 +128,7 @@ def check_file(access_key: str,
   Returns:
     List of boolean status, bucket and filename.
   """
+  log = _log(__file__) if log is None else log
   try:
     s3 = boto3.client('s3',
                       aws_access_key_id=access_key,
@@ -179,7 +184,8 @@ def access_file_update(access_key: str,
                        secret_key: str,
                        s3_url: str,
                        file_name: str,
-                       bucket_name: str = None) -> Tuple:
+                       bucket_name: str = None,
+                       log: logging.Logger = None) -> Tuple:
   """Access file from S3 bucket.
 
   Access and download file from S3 bucket.
@@ -195,6 +201,7 @@ def access_file_update(access_key: str,
     downloads the same. If the file doesn't exist on S3, it'll return
     None.
   """
+  log = _log(__file__) if log is None else log
   try:
     s3 = boto3.client('s3',
                       aws_access_key_id=access_key,
@@ -246,8 +253,10 @@ def copy_file_from_bucket(access_key: str,
                           customer_bucket_name: str,
                           customer_obj_key: str,
                           bucket_name: str,
-                          bucket_obj_key: str = None) -> Optional[bool]:
+                          bucket_obj_key: str = None,
+                          log: logging.Logger = None) -> Optional[bool]:
   """Copy an object from one S3 bucket to another."""
+  log = _log(__file__) if log is None else log
   try:
     s3 = boto3.resource('s3',
                         aws_access_key_id=access_key,

@@ -1,5 +1,6 @@
 """A subservice for storing live video over camera."""
 
+import logging
 import os
 import subprocess
 import time
@@ -13,12 +14,10 @@ from video_processing_engine.utils.common import (calculate_duration,
                                                   timestamp_dirname)
 from video_processing_engine.utils.generate import video_type
 from video_processing_engine.utils.local import filename
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.opencv import (camera_live,
                                                   configure_camera_url)
 from video_processing_engine.utils.paths import live
-
-log = log(__file__)
 
 
 def ffmpeg_str(source: str,
@@ -70,8 +69,10 @@ def start_live_recording(bucket_name: str,
                          camera_password: str = 'iamironman',
                          camera_port: Union[int, str] = 554,
                          camera_timeout: Union[float, int] = 30.0,
-                         timestamp_format: str = '%H:%M:%S') -> Optional[str]:
+                         timestamp_format: str = '%H:%M:%S',
+                         log: logging.Logger = None) -> Optional[str]:
   """Saves videos based on time duration."""
+  log = _log(__file__) if log is None else log
   run_date = datetime.now().strftime('%Y-%m-%d')
   start_time, end_time = f'{run_date} {start_time}', f'{run_date} {end_time}'
   duration = calculate_duration(start_time, end_time, timestamp_format, True)
@@ -90,7 +91,7 @@ def start_live_recording(bucket_name: str,
   if duration != 0:
     try:
       while True:
-        if camera_live(camera_address, camera_port, camera_timeout):
+        if camera_live(camera_address, camera_port, camera_timeout, log):
           file = filename(temp_file, idx)
           log.info('Recording started for selected camera.')
           os.system(ffmpeg_str(url, file, duration, camera_timeout))
@@ -122,8 +123,10 @@ def trigger_live_capture(bucket_name: str,
                          camera_password: str = 'iamironman',
                          camera_port: Union[int, str] = 554,
                          camera_timeout: Union[float, int] = 30.0,
-                         timestamp_format: str = '%H:%M:%S') -> Optional[str]:
+                         timestamp_format: str = '%H:%M:%S',
+                         log: logging.Logger = None) -> Optional[str]:
   """Starts video recording as per the triggering point."""
+  log = _log(__file__) if log is None else log
   run_date = datetime.now().strftime('%Y-%m-%d')
   _start_time = f'{run_date} {start_time}'
   while True:
@@ -131,7 +134,7 @@ def trigger_live_capture(bucket_name: str,
       return start_live_recording(bucket_name, order_name, start_time,
                                   end_time, camera_address, camera_username,
                                   camera_password, camera_port, camera_timeout,
-                                  timestamp_format)
+                                  timestamp_format, log)
     time.sleep(1.0)
 
 
@@ -144,8 +147,10 @@ def trigger_utc_capture(bucket_name: str,
                         camera_password: str = 'iamironman',
                         camera_port: Union[int, str] = 554,
                         camera_timeout: Union[float, int] = 30.0,
-                        timestamp_format: str = '%H:%M:%S') -> Optional[str]:
+                        timestamp_format: str = '%H:%M:%S',
+                        log: logging.Logger = None) -> Optional[str]:
   """Starts video recording as per the triggering point."""
+  log = _log(__file__) if log is None else log
   run_date = datetime.now().strftime('%Y-%m-%d')
   _start_time = f'{run_date} {start_time}'
   _start_time = datetime.strptime(_start_time, '%Y-%m-%d %H:%M:%S')
@@ -155,5 +160,9 @@ def trigger_utc_capture(bucket_name: str,
       return start_live_recording(bucket_name, order_name, start_time,
                                   end_time, camera_address, camera_username,
                                   camera_password, camera_port, camera_timeout,
-                                  timestamp_format)
+                                  timestamp_format, log)
     time.sleep(1.0)
+
+
+trigger_live_capture('bucket', 'order', '23:35:00', '23:40:00',
+                     '203.192.197.184', 'admin', 'user@1234', 9002)

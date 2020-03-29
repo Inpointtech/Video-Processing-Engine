@@ -19,15 +19,14 @@ from video_processing_engine.utils.generate import (bucket_name, order_name,
                                                     video_type)
 from video_processing_engine.utils.local import (
     create_copy, rename_aaaa_file, rename_original_file)
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.paths import downloads, reports
 from video_processing_engine.vars import dev
 
-log = log(__file__)
 
-
-def spin(json_obj: Union[bytes, str]) -> None:
+def spin(json_obj: Union[bytes, str], **kwargs) -> None:
   """Spin the Video processing engine."""
+  log = _log(**kwargs)
   try:
     start = now()
     upload_list = []
@@ -42,11 +41,11 @@ def spin(json_obj: Union[bytes, str]) -> None:
     bucket = bucket_name(json_data.get('country_code', 'xa'),
                          json_data.get('customer_id', 0),
                          json_data.get('contract_id', 0),
-                         json_data.get('order_id', 0))
+                         json_data.get('order_id', 0), log)
     order = order_name(json_data.get('store_id', 0),
                        json_data.get('area_code', 'e'),
                        json_data.get('camera_id', 0),
-                       start)
+                       start, log)
     use_stored = json_data.get('use_stored', False)
     if use_stored:
       stored_filename = json_data['sub_json']['stored_filename']
@@ -67,7 +66,7 @@ def spin(json_obj: Union[bytes, str]) -> None:
                          json_data.get('camera_password', None),
                          int(json_data.get('camera_port', 554)),
                          float(json_data.get('camera_timeout', 30.0)),
-                         json_data.get('timestamp_format', '%H:%M:%S'))
+                         json_data.get('timestamp_format', '%H:%M:%S'), log)
     cloned_file = rename_original_file(original_file, bucket, order)
     log.info('Created backup of the original video.')
     # TODO(xames3): Add code to move this file to AWS Glacier.
@@ -84,7 +83,7 @@ def spin(json_obj: Union[bytes, str]) -> None:
       trim_compressed = json_data.get('trim_compressed', None)
     else:
       trim_compressed = False
-    log.info('Renaming roriginal video as per internal nomenclature.')
+    log.info('Renaming original video as per internal nomenclature.')
     final_file = rename_aaaa_file(cloned_file,
                                   video_type(perform_compression,
                                              perform_trimming,
@@ -162,14 +161,14 @@ def spin(json_obj: Union[bytes, str]) -> None:
     upload_list.extend(trim_upload)
     create_s3_bucket('AKIAR4DHCUP262T3WIUX',
                      'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-                     bucket_name=bucket)
+                     bucket_name=bucket, log=log)
     log.info('Created bucket on Amazon S3 for this order.')
     log.info('Uploading video to the S3 bucket.')
     for idx, file in enumerate(upload_list):
-      url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
-                             'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-                             bucket, file)
-      urls.append(url)
+      # url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
+      #                        'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
+      #                        bucket, file)
+      # urls.append(url)
       log.info(f'Uploaded {idx + 1}/{len(upload_list)} > '
                f'{os.path.basename(file)} on to S3 bucket.')
     log.info('Exporting public URLs.')
@@ -185,6 +184,8 @@ def spin(json_obj: Union[bytes, str]) -> None:
                   f'{os.path.basename(file)} from current machine.')
     log.info('Total time taken for processing this order was '
              f'{now() - start}.')
-  except Exception as error:
+  except KeyboardInterrupt:
+    log.error('Video processing engine interrupted.')
+    exit(0)
+  except Exception:
     log.critical('Something went wrong while video processing was running.')
-    raise error
