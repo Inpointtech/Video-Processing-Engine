@@ -17,11 +17,10 @@ from video_processing_engine.utils.opencv import (disconnect,
 
 
 def track_motion(file: str,
-                 precision: int = 1000,
-                 display: bool = True,
-                 bounding_box: bool = False,
+                 precision: int = 2000,
                  resize: bool = True,
                  resize_width: int = 640,
+                 debug_mode: bool = True,
                  log: logging.Logger = None) -> Optional[str]:
   """Track motion in the video using Background Subtraction method."""
   log = _log(__file__) if log is None else log
@@ -32,7 +31,7 @@ def track_motion(file: str,
     os.mkdir(directory)
   temp_file = os.path.join(directory, f'{Path(file).stem}.mp4')
   idx = 1
-  if bounding_box:
+  if debug_mode:
     log.info('Debug mode - Enabled.')
   log.info(f'Analyzing motion for "{os.path.basename(file)}".')
   try:
@@ -62,7 +61,7 @@ def track_motion(file: str,
       for contour in contours:
         if cv2.contourArea(contour) < precision:
           continue
-        if bounding_box:
+        if debug_mode:
           (x0, y0, x1, y1) = cv2.boundingRect(contour)
           draw_bounding_box(frame, (x0, y0), (x0 + x1, y0 + y1))
         consec_frames = 0
@@ -76,7 +75,7 @@ def track_motion(file: str,
       if kcw.recording and consec_frames == 32:
         log.info('Saving portion of video with detected motion.')
         kcw.finish()
-      if display:
+      if debug_mode:
         cv2.imshow('Video Processing Engine - Motion Detection', frame)
       if cv2.waitKey(1) & 0xFF == int(27):
         disconnect(stream)
