@@ -104,14 +104,15 @@ def start_live_recording(bucket_name: str,
           idx += 1
           if (force_close <= stop_utc) or (duration <= 0):
             output = concate_videos(temp_path, delete_old_files=True)
-            return output if os.path.isfile(output) else None
+            if output:
+              return output
         else:
           log.warning('Unable to record because of poor network connectivity.')
           slept_duration += camera_timeout
           log.warning('Compensating lost time & attempting after 30 secs.')
           time.sleep(camera_timeout)
-    except OSError:
-      pass
+    except Exception as error:
+      log.critical(f'Something went wrong because of {error}')
 
 
 def trigger_live_capture(bucket_name: str,
@@ -164,5 +165,5 @@ def trigger_utc_capture(bucket_name: str,
     time.sleep(1.0)
 
 
-trigger_live_capture('bucket', 'order', '23:35:00', '23:40:00',
-                     '203.192.197.184', 'admin', 'user@1234', 9002)
+# trigger_live_capture('bucket', 'order', '23:35:00', '23:40:00',
+#                      '203.192.197.184', 'admin', 'user@1234', 9002)
