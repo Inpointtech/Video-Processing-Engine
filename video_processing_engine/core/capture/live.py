@@ -163,7 +163,3 @@ def trigger_utc_capture(bucket_name: str,
                                   camera_password, camera_port, camera_timeout,
                                   timestamp_format, log)
     time.sleep(1.0)
-
-
-# trigger_live_capture('bucket', 'order', '23:35:00', '23:40:00',
-#                      '203.192.197.184', 'admin', 'user@1234', 9002)
