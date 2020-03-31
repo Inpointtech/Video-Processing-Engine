@@ -27,7 +27,7 @@ def concate_videos(directory: str,
            if file_size(os.path.join(directory, file)) != '300.0 bytes']
   files.sort(key=os.path.getctime)
   files = [f"file '{file}'\n" for file in files
-           if not file.endswith('__init__.py')]
+           if file.endswith('.mp4')]
   if len(os.listdir(directory)) == 0:
     return None
   if len(os.listdir(directory)) == 1:
@@ -35,7 +35,8 @@ def concate_videos(directory: str,
       os.remove(os.path.join(directory, os.listdir(directory)[0]))
       return None
     return os.path.join(directory, os.listdir(directory)[0])
-  with open(os.path.join(directory, f'{td()}.tmp_xa'), 'w') as file:
+  temp_file_xa = os.path.join(directory, f'{td()}.tmp_xa')
+  with open(temp_file_xa, 'w') as file:
     file.writelines(files)
   output = os.path.join(directory, f'{td()}.mp4')
   os.system(f'ffmpeg -loglevel error -y -f concat -safe 0 -i '
@@ -43,7 +44,8 @@ def concate_videos(directory: str,
             f'-acodec copy {output}')
   if delete_old_files:
     temp = [os.path.join(directory, file) for file in os.listdir(directory)
-            if not os.path.join(directory, file).endswith('__init__.py')]
+            if os.path.join(directory, file).endswith('.mp4')]
+    temp.append(temp_file_xa)
     try:
       temp.remove(output)
     except ValueError:
