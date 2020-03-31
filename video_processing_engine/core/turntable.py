@@ -29,10 +29,7 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
   log = _log(**kwargs)
   try:
     start = now()
-    upload_list = []
-    temp_list = []
-    trim_upload = []
-    urls = []
+    upload_list, temp_list, trim_upload, urls = [], [], [], []
     compression_ratio = 50
     original_file = None
     log.info('Video processing engine started spinning.')
