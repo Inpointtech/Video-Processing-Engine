@@ -112,3 +112,10 @@ def calculate_duration(start_time: str,
     _start_time = datetime.strptime(start_time, timestamp_format)
     _end_time = datetime.strptime(end_time, timestamp_format)
   return float((_end_time - _start_time).seconds)
+
+
+def seconds_to_datetime(second: int) -> str:
+  """Convert seconds to datetime string."""
+  mins, secs = divmod(second, 60)
+  hours, mins = divmod(mins, 60)
+  return '%02d:%02d:%02d' % (hours, mins, secs)
