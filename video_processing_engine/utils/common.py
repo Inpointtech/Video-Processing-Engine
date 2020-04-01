@@ -119,3 +119,11 @@ def seconds_to_datetime(second: int) -> str:
   mins, secs = divmod(second, 60)
   hours, mins = divmod(mins, 60)
   return '%02d:%02d:%02d' % (hours, mins, secs)
+
+
+def datetime_to_utc(timestamp: str,
+                    timezone: str,
+                    timestamp_format: str = '%Y-%m-%d %H:%M:%S') -> str:
+  """Convert timezone specific timestamp to UTC time."""
+  local = datetime.strptime(timestamp, timestamp_format)
+  return str(pytz.timezone(timezone).localize(local).astimezone(pytz.utc))[:-6]

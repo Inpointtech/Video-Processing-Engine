@@ -53,17 +53,21 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
         raise Exception('[e] File not selected for processing.')
     else:
       log.info('Recording from live camera for this order.')
-      lc = live.trigger_live_capture
-      # lc = live.trigger_utc_capture
+      # lc = live.trigger_live_capture
+      lc = live.trigger_utc_capture
       original_file = lc(bucket, order,
                          json_data.get('start_time', None),
                          json_data.get('end_time', None),
+                         json_data.get('camera_timezone', 'Asia/Kolkata'),
                          json_data.get('camera_address', None),
                          json_data.get('camera_username', None),
                          json_data.get('camera_password', None),
                          int(json_data.get('camera_port', 554)),
                          float(json_data.get('camera_timeout', 30.0)),
-                         json_data.get('timestamp_format', '%H:%M:%S'), log)
+                         json_data.get('timestamp_format', '%H:%M:%S'),
+                         json_data.get('ui_timestamp_format',
+                                       '%Y-%m-%d %H:%M:%S'),
+                         log)
     cloned_file = rename_original_file(original_file, bucket, order)
     log.info('Created backup of the original video.')
     # TODO(xames3): Add code to move this file to AWS Glacier.

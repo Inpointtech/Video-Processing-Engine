@@ -10,6 +10,7 @@ from typing import Optional, Union
 from video_processing_engine.core.process.concate import concate_videos
 from video_processing_engine.core.process.stats import duration as drn
 from video_processing_engine.utils.common import (calculate_duration,
+                                                  datetime_to_utc,
                                                   file_size, now,
                                                   timestamp_dirname)
 from video_processing_engine.utils.generate import video_type
@@ -143,19 +144,22 @@ def trigger_utc_capture(bucket_name: str,
                         order_name: str,
                         start_time: str,
                         end_time: str,
+                        camera_timezone: str,
                         camera_address: str,
                         camera_username: str = 'xames3',
                         camera_password: str = 'iamironman',
                         camera_port: Union[int, str] = 554,
                         camera_timeout: Union[float, int] = 30.0,
                         timestamp_format: str = '%H:%M:%S',
+                        ui_timestamp_format: str = '%Y-%m-%d %H:%M:%S',
                         log: logging.Logger = None) -> Optional[str]:
   """Starts video recording as per the triggering point."""
   log = _log(__file__) if log is None else log
   run_date = datetime.now().strftime('%Y-%m-%d')
   _start_time = f'{run_date} {start_time}'
-  _start_time = datetime.strptime(_start_time, '%Y-%m-%d %H:%M:%S')
-  _start_time = datetime.utcfromtimestamp(float(_start_time.strftime('%s')))
+  _start_time = datetime_to_utc(_start_time,
+                                camera_timezone,
+                                ui_timestamp_format)
   while True:
     if str(now()) >= str(_start_time):
       return start_live_recording(bucket_name, order_name, start_time,
