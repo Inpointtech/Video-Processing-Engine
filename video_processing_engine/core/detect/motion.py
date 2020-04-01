@@ -104,8 +104,8 @@ def track_motion(file: str,
     if concate_temp:
       if os.path.isfile(concate_temp):
         log.info('Applying H264 encoding for bypassing browser issues.')
-        os.system(f'ffmpeg -loglevel error -i {concate_temp} -vcodec libx264 '
-                  f'{temp_file}')
+        os.system(f'ffmpeg -loglevel error -y -i {concate_temp} -vcodec '
+                  f'libx264 {temp_file}')
         log.info('Cleaning up archived files.')
         os.remove(concate_temp)
         return temp_file
