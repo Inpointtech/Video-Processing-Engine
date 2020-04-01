@@ -3,12 +3,11 @@
 import os
 import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional, Union
 
 from moviepy.editor import VideoFileClip as vfc
 
-from video_processing_engine.core.process.compress import calculate_cbr
 from video_processing_engine.core.process.stats import duration
 from video_processing_engine.utils.common import calculate_duration
 from video_processing_engine.utils.local import (filename, quick_rename,
@@ -38,16 +37,15 @@ def trim_video(file: str,
             compression technique on the trimmed videos.
     threads: Number of threads (default: 15) to be used for trimming.
   """
-  bitrate = calculate_cbr(file, 30)
   video = vfc(file, audio=False, verbose=True).subclip(start, end)
-  video.write_videofile(output, codec=codec, preset=preset, threads=threads,
-                        bitrate=f'{bitrate}k', logger=None)
+  video.write_videofile(output)
 
 
 def trim_num_parts(file: str,
                    num_parts: int,
                    equal_distribution: bool = False,
                    clip_length: Union[float, int] = 30,
+                   random_start: bool = True,
                    codec: str = 'libx264',
                    preset: str = 'ultrafast',
                    threads: int = 15) -> Optional[List]:
@@ -80,8 +78,12 @@ def trim_num_parts(file: str,
   if equal_distribution:
     for file in video_list:
       if clip_length <= split_part:
+        start, end = 0, clip_length
+        if random_start:
+          start = random.randint(1, int(duration(file)))
+          end = start + clip_length
         file, temp = quick_rename(file)
-        trim_video(temp, file, 0, clip_length)
+        trim_video(temp, file, start, end)
         time.sleep(2.0)
   return video_list
 
@@ -207,8 +209,8 @@ def trim_by_points(file: str,
   _factor = 1 if factor == 's' else 60
   total_limit = int(duration(file) / _factor)
   if factor == 'p':
-    start_time = round((start_time / 100) * total_limit, 2)
-    end_time = round((end_time / 100) * total_limit, 2)
+    start_time = int((start_time / 100) * total_limit)
+    end_time = int((end_time / 100) * total_limit)
     total_limit = 100
   if end_time < start_time:
     raise Exception('Ending time is less than starting time.')
