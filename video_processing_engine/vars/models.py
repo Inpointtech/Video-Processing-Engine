@@ -4,6 +4,9 @@
 FACE_PROTOTEXT = 'deploy.prototxt.txt'
 FACE_CAFFEMODEL = 'res10_300x300_ssd_iter_140000.caffemodel'
 TEXT_EAST_DETECTOR = 'frozen_east_text_detection.pb'
+FRONTAL_HAAR = 'haarcascade_frontalface_default.xml'
+FRONTAL_HAAR_2 = 'haarcascade_frontalface_alt2.xml'
+PROFILE_HAAR = 'haarcascade_profileface.xml'
 
 # Confidence scores
 DETECTED_FACE_CONFIDENCE = 0.7
