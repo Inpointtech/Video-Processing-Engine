@@ -13,11 +13,10 @@ import numpy as np
 from video_processing_engine.utils.common import seconds_to_datetime as s2d
 from video_processing_engine.utils.local import filename
 from video_processing_engine.utils.logs import log as _log
-from video_processing_engine.utils.opencv import draw_bounding_box, rescale
+from video_processing_engine.utils.opencvapi import draw_bounding_box, rescale
 from video_processing_engine.utils.paths import (caffemodel, frontal_haar,
                                                  prototxt)
 from video_processing_engine.vars import color, dev
-from video_processing_engine.vars import models as md
 
 
 def face_meta(boxes: int, occurence: Union[float, int]) -> str:
