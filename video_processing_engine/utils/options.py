@@ -1,10 +1,8 @@
 """Utility for interacting with cmd using questionary."""
 
 import os
-from typing import List, Optional, Union
+from typing import List, Optional
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
 from questionary import Choice, select, text
 
 

@@ -2,8 +2,6 @@
 
 import os
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
 from video_processing_engine.vars import models as md
 
 # Parent directory path. All the references will be made relatively

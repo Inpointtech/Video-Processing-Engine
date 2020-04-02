@@ -1,10 +1,8 @@
 """A subservice for showing statistics the videos."""
 
 import os
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
-# TODO(xames3): Remove suppressed pyright warnings.
-# pyright: reportMissingTypeStubs=false
 import cv2
 from moviepy.editor import VideoFileClip as vfc
 
