@@ -13,8 +13,7 @@ import numpy as np
 from video_processing_engine.utils.common import seconds_to_datetime as s2d
 from video_processing_engine.utils.local import filename
 from video_processing_engine.utils.logs import log as _log
-from video_processing_engine.utils.opencv import (disconnect,
-                                                  draw_bounding_box, rescale)
+from video_processing_engine.utils.opencv import draw_bounding_box, rescale
 from video_processing_engine.utils.paths import (caffemodel, frontal_haar,
                                                  prototxt)
 from video_processing_engine.vars import color, dev
@@ -27,7 +26,6 @@ def face_meta(boxes: int, occurence: Union[float, int]) -> str:
 
 
 def redact_faces(file: str,
-                 confidence: float = md.DETECTED_FACE_CONFIDENCE,
                  use_ml_model: bool = True,
                  resize: bool = True,
                  resize_width: int = 640,
@@ -71,7 +69,6 @@ def redact_faces(file: str,
         net.setInput(blob)
         detected_faces = net.forward()
         bounding_boxes = []
-        # Loop over all the detected faces in the frame.
         for idx in range(0, detected_faces.shape[2]):
           if detected_faces[0, 0, idx, 2] > dynamic_conf:
             time.sleep(dynamic_conf)
@@ -79,7 +76,7 @@ def redact_faces(file: str,
                                                                 width, height])
             bounding_boxes.append(coords.astype('int'))
             x0, y0, x1, y1 = coords.astype('int')
-            x_bias, y_bias = (x1 - x0) * 0.07, (y1 - y0) * 0.07
+            x_bias, y_bias = (x1 - x0) * 0.04, (y1 - y0) * 0.04
             (x0, y0), (x1, y1) = ((int(x0 + x_bias), int(y0 + y_bias)),
                                   (int(x1 - x_bias), int(y1 - y_bias)))
             if debug_mode:
@@ -104,7 +101,10 @@ def redact_faces(file: str,
           if debug_mode:
             draw_bounding_box(frame, (x0, y0), (x0 + x1, y0 + y1), color.red)
           try:
-            frame[y0:y1, x0:x1] = cv2.blur(frame[y0:y1, x0:x1], (30, 30))
+            frame[y0:(y0 + y1),
+                  x0:(x0 + x1)] = cv2.GaussianBlur(frame[y0:(y0 + y1),
+                                                         x0:(x0 + x1)],
+                                                   (21, 21), 0)
           except Exception:
             pass
           boxes.append([x1, y1])
