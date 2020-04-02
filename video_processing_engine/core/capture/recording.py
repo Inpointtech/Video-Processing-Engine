@@ -16,8 +16,8 @@ from video_processing_engine.utils.common import (calculate_duration,
 from video_processing_engine.utils.generate import video_type
 from video_processing_engine.utils.local import filename
 from video_processing_engine.utils.logs import log as _log
-from video_processing_engine.utils.opencv import (camera_live,
-                                                  configure_camera_url)
+from video_processing_engine.utils.opencvapi import (camera_live,
+                                                     configure_camera_url)
 from video_processing_engine.utils.paths import live
 
 
@@ -151,7 +151,6 @@ def trigger_utc_capture(bucket_name: str,
                         camera_port: Union[int, str] = 554,
                         camera_timeout: Union[float, int] = 30.0,
                         timestamp_format: str = '%H:%M:%S',
-                        ui_timestamp_format: str = '%Y-%m-%d %H:%M:%S',
                         log: logging.Logger = None) -> str:
   """Starts video recording as per the triggering point."""
   log = _log(__file__) if log is None else log
@@ -159,7 +158,7 @@ def trigger_utc_capture(bucket_name: str,
   _start_time = f'{run_date} {start_time}'
   _start_time = datetime_to_utc(_start_time,
                                 camera_timezone,
-                                ui_timestamp_format)
+                                '%Y-%m-%d %H:%M:%S')
   log.info('Video processing engine is scheduled to start '
            f'recording at {_start_time}.')
   while True:
