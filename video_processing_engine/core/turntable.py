@@ -6,7 +6,7 @@ import logging
 import os
 from typing import List, Optional, Union
 
-from video_processing_engine.core.capture import live
+from video_processing_engine.core.capture.recording import trigger_utc_capture
 from video_processing_engine.core.detect.motion import track_motion
 from video_processing_engine.core.process.compress import compress_video
 from video_processing_engine.core.process.trim import (trim_by_factor,
@@ -14,7 +14,7 @@ from video_processing_engine.core.process.trim import (trim_by_factor,
                                                        trim_num_parts,
                                                        trim_sample_section,
                                                        trim_sub_sample)
-from video_processing_engine.utils.aws import (create_s3_bucket,
+from video_processing_engine.utils.boto_wrap import (create_s3_bucket,
                                                upload_to_bucket)
 from video_processing_engine.utils.common import now
 from video_processing_engine.utils.generate import (bucket_name, order_name,
@@ -68,9 +68,9 @@ def trimming_callable(json_data: dict,
   return trim_upload
 
 
-def spin(json_obj: Union[bytes, str], **kwargs) -> None:
+def spin(json_obj: Union[bytes, str]) -> None:
   """Spin the Video processing engine."""
-  log = _log(**kwargs)
+  log = _log(__file__)
   try:
     start = now()
     upload_list, temp_list, trim_upload, urls = [], [], [], []
@@ -96,21 +96,18 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
         raise Exception('[e] File not selected for processing.')
     else:
       log.info('Recording from live camera for this order.')
-      # lc = live.trigger_live_capture
-      lc = live.trigger_utc_capture
-      original_file = lc(bucket, order,
-                         json_data['start_time'],
-                         json_data['end_time'],
-                         json_data.get('camera_timezone', 'Asia/Kolkata'),
-                         json_data['camera_address'],
-                         json_data.get('camera_username', 'admin'),
-                         json_data['camera_password'],
-                         int(json_data.get('camera_port', 554)),
-                         float(json_data.get('camera_timeout', 30.0)),
-                         json_data.get('timestamp_format', '%H:%M:%S'),
-                         json_data.get('ui_timestamp_format',
-                                       '%Y-%m-%d %H:%M:%S'),
-                         log)
+      trigger = trigger_utc_capture
+      original_file = trigger(bucket, order,
+                              json_data['start_time'],
+                              json_data['end_time'],
+                              json_data.get('camera_timezone', 'Asia/Kolkata'),
+                              json_data['camera_address'],
+                              json_data.get('camera_username', 'admin'),
+                              json_data['camera_password'],
+                              int(json_data.get('camera_port', 554)),
+                              float(json_data.get('camera_timeout', 30.0)),
+                              json_data.get('timestamp_format', '%H:%M:%S'),
+                              log)
     cloned_file = rename_original_file(original_file, bucket, order)
     log.info('Created backup of the original video.')
     # TODO(xames3): Add code to move this file to AWS Glacier.
@@ -145,13 +142,13 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
     upload_list.extend(trim_upload)
     create_s3_bucket('AKIAR4DHCUP262T3WIUX',
                      'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-                     bucket_name=bucket, log=log)
+                     bucket, log)
     log.info('Created bucket on Amazon S3 for this order.')
     log.info('Uploading video to the S3 bucket.')
     for idx, file in enumerate(upload_list):
       url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
                              'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-                             bucket, file)
+                             bucket, file, log)
       urls.append(url)
       log.info(f'Uploaded {idx + 1}/{len(upload_list)} > '
                f'{os.path.basename(file)} on to S3 bucket.')
