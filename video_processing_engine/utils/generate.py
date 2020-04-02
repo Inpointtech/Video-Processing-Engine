@@ -162,7 +162,7 @@ def bucket_name(country_code: str,
                 customer_id: Union[int, float, str],
                 contract_id: Union[int, float, str],
                 order_id: Union[int, float, str],
-                log: logging.Logger = None) -> Optional[str]:
+                log: logging.Logger = None) -> str:
   """Generate an unique bucket name.
 
   The generated name represents the hierarchy of the stored video.
@@ -185,7 +185,7 @@ def bucket_name(country_code: str,
       raise exceptions.BucketNameZeroError
   except exceptions.BucketNameZeroError as error:
     log.error(f'BucketNameError: {error}')
-    return None
+    return 'bucketerror'
   else:
     return '{}{:0>4}{:0>2}{:0>2}'.format(hash_country_code(country_code),
                                          int(customer_id),
@@ -197,7 +197,7 @@ def order_name(store_id: Union[int, float, str],
                area_code: str,
                camera_id: Union[int, float, str],
                timestamp: Optional[datetime] = None,
-               log: logging.Logger = None) -> Optional[str]:
+               log: logging.Logger = None) -> str:
   """Generate an unique order name.
 
   Generate an unique string based on order details.
@@ -220,7 +220,7 @@ def order_name(store_id: Union[int, float, str],
       raise exceptions.OrderNameZeroError
   except exceptions.OrderNameZeroError as error:
     log.error(f'OrderNameZeroError: {error}')
-    return None
+    return 'ordererror'
   else:
     return '{:0>5}{}{:0>2}{}'.format(int(store_id), area_code,
                                      int(camera_id), hash_timestamp(timestamp,
