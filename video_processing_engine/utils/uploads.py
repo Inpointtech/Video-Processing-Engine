@@ -7,14 +7,13 @@ from typing import Optional
 from azure.storage.blob import BlobClient
 
 from video_processing_engine.utils.access import generate_connection_string
-from video_processing_engine.utils.logs import log as _log
 
 
 def push_to_azure(account_name: str,
                   account_key: str,
                   container_name: str,
                   filename: str,
-                  log: logging.Logger = None) -> Optional[bool]:
+                  log: logging.Logger) -> Optional[bool]:
   """Upload file to Microsoft Azure.
 
   Upload file to Microsoft Azure.
@@ -30,7 +29,6 @@ def push_to_azure(account_name: str,
   """
   # You can find the reference code here:
   # https://pypi.org/project/azure-storage-blob/
-  log = _log(__file__) if log is None else log
   try:
     blob_name = os.path.basename(filename)
     connection_string = generate_connection_string(account_name, account_key)
@@ -53,7 +51,7 @@ def push_to_client_ftp(username: str,
                        public_address: str,
                        file_path: str,
                        remote_path: str,
-                       log: logging.Logger = None) -> Optional[bool]:
+                       log: logging.Logger) -> Optional[bool]:
   """Upload/push file using OpenSSH via FTP.
 
   Push file from current machine to a remote machine.
@@ -70,7 +68,6 @@ def push_to_client_ftp(username: str,
   """
   # You can find the reference code here:
   # https://stackoverflow.com/a/56850195
-  log = _log(__file__) if log is None else log
   try:
     os.system(f'sshpass -p {password} scp -o StrictHostKeyChecking=no '
               f'{file_path} {username}@{public_address}:{remote_path}')

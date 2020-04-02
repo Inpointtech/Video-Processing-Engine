@@ -15,7 +15,7 @@ from video_processing_engine.core.process.trim import (trim_by_factor,
                                                        trim_sample_section,
                                                        trim_sub_sample)
 from video_processing_engine.utils.boto_wrap import (create_s3_bucket,
-                                               upload_to_bucket)
+                                                     upload_to_bucket)
 from video_processing_engine.utils.common import now
 from video_processing_engine.utils.generate import (bucket_name, order_name,
                                                     video_type)

@@ -3,8 +3,9 @@
 import csv
 import logging
 import os
+import shutil
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import cv2
 import imutils
@@ -13,8 +14,8 @@ from video_processing_engine.core.detect.keyclipwriter import KeyClipWriter
 from video_processing_engine.core.process.concate import concate_videos
 from video_processing_engine.utils.local import filename
 from video_processing_engine.utils.logs import log as _log
-from video_processing_engine.utils.opencv import (disconnect,
-                                                  draw_bounding_box, rescale)
+from video_processing_engine.utils.opencvapi import (disconnect,
+                                                     draw_bounding_box, rescale)
 from video_processing_engine.utils.common import seconds_to_datetime as s2d
 from video_processing_engine.vars import dev
 
@@ -29,7 +30,7 @@ def track_motion(file: str,
                  resize: bool = True,
                  resize_width: int = 640,
                  debug_mode: bool = True,
-                 log: logging.Logger = None) -> Optional[str]:
+                 log: logging.Logger = None) -> str:
   """Track motion in the video using Background Subtraction method."""
   log = _log(__file__) if log is None else log
   kcw = KeyClipWriter(bufSize=32)
@@ -108,6 +109,14 @@ def track_motion(file: str,
                   f'libx264 {temp_file}')
         log.info('Cleaning up archived files.')
         os.remove(concate_temp)
-        return temp_file
+        temp_path = os.path.dirname(os.path.dirname(temp_file))
+        move_file = os.path.join(temp_path, os.path.basename(temp_file))
+        shutil.move(temp_file, move_file)
+        shutil.rmtree(os.path.dirname(temp_file))
+        return move_file
+      else:
+        return 'MotionDetectionError'
+    else:
+      return 'ConcatenationError'
   except Exception as error:
     log.critical(f'Something went wrong because of {error}')

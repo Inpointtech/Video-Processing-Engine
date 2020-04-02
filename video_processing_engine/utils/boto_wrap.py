@@ -1,4 +1,4 @@
-"""Utility for working with AWS using boto3."""
+"""Utility for work as a wrapper around Amazon's Boto3 API."""
 
 import logging
 import os
@@ -8,7 +8,6 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
 from video_processing_engine.utils.common import file_size as fz
-from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.paths import downloads
 
 
@@ -27,6 +26,7 @@ def create_s3_bucket(access_key: str,
     access_key: AWS access key.
     secret_key: AWS secret key.
     bucket_name: Bucket to create.
+    log: Logger object for logging the status.
     region: Bucket region (default: ap-south-1 [Asia Pacific (Mumbai)]).
 
   Returns:
@@ -65,6 +65,7 @@ def upload_to_bucket(access_key: str,
     secret_key: AWS saccess_key: str,
     bucket_name: Bucket to upload to.
     filename: Local file to upload.
+    log: Logger object for logging the status.
     s3_name: Name (default: None) for the uploaded file.
 
   Returns:
@@ -82,13 +83,13 @@ def upload_to_bucket(access_key: str,
       try:
         s3_name = os.path.basename(filename)
       except FileNotFoundError:
+        log.error('File not found.')
         return None
-      else:
-        s3.upload_file(filename, bucket_name, s3_name,
-                       ExtraArgs={'ACL': 'public-read',
-                                  'ContentType': 'video/mp4'})
-        log.info(f'{s3_name} file uploaded on to Amazon S3 bucket.')
-        return generate_s3_url(bucket_name, s3_name)
+    s3.upload_file(filename, bucket_name, s3_name,
+                    ExtraArgs={'ACL': 'public-read',
+                              'ContentType': 'video/mp4'})
+    log.info(f'{s3_name} file uploaded on to Amazon S3 bucket.')
+    return generate_s3_url(bucket_name, s3_name)
 
 
 def generate_s3_url(bucket_name: str, s3_name: str) -> str:
@@ -121,7 +122,8 @@ def check_file(access_key: str,
     access_key: AWS access key.
     secret_key: AWS saccess_key: str,
     s3_url: Public url for the file.
-    bucket_name: Bucket to search and download from.
+    log: Logger object for logging the status.
+    bucket_name: Bucket (default: None) to search and download from.
 
   Returns:
     List of boolean status, bucket and filename.
@@ -156,7 +158,8 @@ def access_file(access_key: str,
     access_key: AWS access key.
     secret_key: AWS saccess_key: str,
     s3_url: Public url for the file.
-    bucket_name: Bucket to search and download from.
+    log: Logger object for logging the status.
+    bucket_name: Bucket (default: None) to search and download from.
 
   Notes:
     This function ensures the file exists on the S3 bucket and then
@@ -168,6 +171,7 @@ def access_file(access_key: str,
                       aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key)
   except (ClientError, NoCredentialsError):
+    log.error('Wrong credentials used to access the AWS account.')
     return None
   else:
     [*status, bucket, file] = check_file(access_key, secret_key,
@@ -192,6 +196,7 @@ def access_file_update(access_key: str,
     access_key: AWS access key.
     secret_key: AWS saccess_key: str,
     s3_url: Public url for the file.
+    log: Logger object for logging the status.
     bucket_name: Bucket to search and download from.
 
   Notes:
@@ -252,7 +257,24 @@ def copy_file_from_bucket(access_key: str,
                           bucket_name: str,
                           log: logging.Logger,
                           bucket_obj_key: str = None) -> Optional[bool]:
-  """Copy an object from one S3 bucket to another."""
+  """Copy an object from one S3 bucket to another.
+
+  Copies an object/file from one S3 bucket to another considering we
+  have access.
+
+  Args:
+    access_key: AWS access key.
+    secret_key: AWS saccess_key: str,
+    customer_bucket_name: Bucket name from where we need to fetch file.
+    customer_obj_key: Object/File name to be fetched.
+    bucket_name: Target bucket name where to dump the fetched file.
+    log: Logger object for logging the status.
+    bucket_obj_key: Object name to be renamed in destination bucket.
+
+  Notes:
+    This function assumes that the files from 'customer_bucket_name'
+    are publicly available.
+  """
   try:
     s3 = boto3.resource('s3',
                         aws_access_key_id=access_key,

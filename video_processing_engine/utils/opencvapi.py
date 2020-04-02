@@ -8,10 +8,8 @@ import cv2
 import imutils
 import numpy as np
 
-from video_processing_engine.vars.color import green, yellow
 from video_processing_engine.utils.logs import log as _log
-
-# log = log(__file__)
+from video_processing_engine.vars.color import green, yellow
 
 
 def rescale(frame: np.ndarray,
