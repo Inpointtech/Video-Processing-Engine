@@ -5,8 +5,10 @@ import pika
 from video_processing_engine.core.turntable import spin
 from video_processing_engine.utils.logs import log as _log
 
+log = _log(__file__)
 
-def pika_connect(**kwargs):
+
+def pika_connect():
   credentials = pika.PlainCredentials('test', 'inpoint20200318')
   connection = pika.BlockingConnection(
     pika.ConnectionParameters(host='159.89.52.183',
@@ -17,24 +19,22 @@ def pika_connect(**kwargs):
   return channel
 
 
-def compute(json_obj, **kwargs):
-  spin(json_obj, **kwargs)
+def compute(json_obj):
+  spin(json_obj)
 
 
-def callback(channel, method, properties, body, **kwargs):
-  log = _log(**kwargs)
+def callback(channel, method, properties, body):
   log.info(f'Received: {body}')
-  compute(body, **kwargs)
+  compute(body)
 
 
-channel = pika_connect(file=__file__)
+channel = pika_connect()
 channel.basic_consume(queue='test-vpe',
                       on_message_callback=callback,
                       auto_ack=True)
 
 
-def consume(**kwargs):
-  log = _log(**kwargs)
+def consume():
   global channel
   try:
     log.info('Video processing engine consumer started.')
@@ -42,13 +42,12 @@ def consume(**kwargs):
   except Exception:
     log.warning('Video processing engine consumer stopped after processing '
                 'time consuming order.')
-    channel = pika_connect(**kwargs)
+    channel = pika_connect()
     log.info('Video processing engine consumer restarted.')
-    consume(**kwargs)
+    consume()
   except KeyboardInterrupt:
     log.error('Video processing engine consumer interrupted.')
     exit(0)
 
 
-while True:
-  consume(file=__file__)
+consume()
