@@ -2,10 +2,12 @@
 
 import csv
 import json
+import logging
 import os
-from typing import Union
+from typing import List, Optional, Union
 
 from video_processing_engine.core.capture import live
+from video_processing_engine.core.detect.motion import track_motion
 from video_processing_engine.core.process.compress import compress_video
 from video_processing_engine.core.process.trim import (trim_by_factor,
                                                        trim_by_points,
@@ -24,13 +26,54 @@ from video_processing_engine.utils.paths import downloads, reports
 from video_processing_engine.vars import dev
 
 
+def trimming_callable(json_data: dict,
+                      final_file: str,
+                      log: logging.Logger) -> Union[Optional[List], str]:
+  """Trimming function."""
+  trim_upload = []
+  if json_data['trim_type'] == 'trim_by_factor':
+    clip_length = int(json_data.get('clip_length', 30))
+    trim_factor = json_data.get('trim_factor', 's')
+    last_clip = json_data.get('last_clip', False)
+    log.info('Trimming video by factor.')
+    trim_upload = trim_by_factor(final_file, trim_factor,
+                                  clip_length, last_clip)
+  elif json_data['trim_type'] == 'trim_num_parts':
+    number_of_clips = int(json_data.get('number_of_clips', 24))
+    equal_distribution = json_data.get('equal_distribution', True)
+    clip_length = int(json_data.get('clip_length', 30))
+    random_start = json_data.get('random_start', True)
+    random_sequence = json_data.get('random_sequence', True)
+    log.info(f'Trimming video in {number_of_clips} parts.')
+    trim_upload = trim_num_parts(final_file, int(number_of_clips),
+                                  equal_distribution, clip_length,
+                                  random_start, random_sequence)
+  elif json_data['trim_type'] == 'trim_sub_sample':
+    start_time = json_data['start_time']
+    end_time = json_data['end_time']
+    sample_start_time = json_data['sample_start_time']
+    sample_end_time = json_data['sample_end_time']
+    timestamp_format = json_data.get('timestamp_format', '%H:%M:%S')
+    log.info('Trimming portion of the video as per timestamp.')
+    trim_upload = trim_sub_sample(final_file, start_time, end_time,
+                                  sample_start_time, sample_end_time,
+                                  timestamp_format)
+  elif json_data['trim_type'] == 'trim_by_points':
+    start_time = int(json_data.get('point_start_time', 0))
+    end_time = int(json_data.get('point_end_time', 30))
+    trim_factor = json_data.get('trim_factor', 's')
+    log.info('Trimming video as per start & end time.')
+    trim_upload = trim_by_points(final_file, start_time, end_time,
+                                  trim_factor)
+  return trim_upload
+
+
 def spin(json_obj: Union[bytes, str], **kwargs) -> None:
   """Spin the Video processing engine."""
   log = _log(**kwargs)
   try:
     start = now()
     upload_list, temp_list, trim_upload, urls = [], [], [], []
-    compression_ratio = 50
     original_file = None
     log.info('Video processing engine started spinning.')
     json_data = json.loads(json_obj)
@@ -56,12 +99,12 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
       # lc = live.trigger_live_capture
       lc = live.trigger_utc_capture
       original_file = lc(bucket, order,
-                         json_data.get('start_time', None),
-                         json_data.get('end_time', None),
+                         json_data['start_time'],
+                         json_data['end_time'],
                          json_data.get('camera_timezone', 'Asia/Kolkata'),
-                         json_data.get('camera_address', None),
-                         json_data.get('camera_username', None),
-                         json_data.get('camera_password', None),
+                         json_data['camera_address'],
+                         json_data.get('camera_username', 'admin'),
+                         json_data['camera_password'],
                          int(json_data.get('camera_port', 554)),
                          float(json_data.get('camera_timeout', 30.0)),
                          json_data.get('timestamp_format', '%H:%M:%S'),
@@ -72,16 +115,16 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
     log.info('Created backup of the original video.')
     # TODO(xames3): Add code to move this file to AWS Glacier.
     archived_file = create_copy(cloned_file)
-    select_sample = json_data.get('select_sample', None)
+    select_sample = json_data['select_sample']
     if select_sample:
-      sampling_rate = int(json_data.get('sampling_rate', None))
+      sampling_rate = int(json_data['sampling_rate'])
       log.info(f'Randomly sampling {sampling_rate}% of the original video.')
       temp = trim_sample_section(cloned_file, sampling_rate)
       temp_list.append(temp)
-    perform_compression = json_data.get('perform_compression', None)
-    perform_trimming = json_data.get('perform_trimming', None)
+    perform_compression = json_data.get('perform_compression', True)
+    perform_trimming = json_data.get('perform_trimming', True)
     if perform_trimming:
-      trim_compressed = json_data.get('trim_compressed', None)
+      trim_compressed = json_data.get('trim_compressed', True)
     else:
       trim_compressed = False
     log.info('Renaming original video as per internal nomenclature.')
@@ -89,76 +132,16 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
                                   video_type(perform_compression,
                                              perform_trimming,
                                              trim_compressed))
+    # final_file = track_motion(final_file, log=log)
     upload_list.append(final_file)
     if perform_compression:
-      compression_ratio = int(json_data.get('compression_ratio',
-                                            compression_ratio))
+      compression_ratio = int(json_data.get('compression_ratio', 50))
       # temp = compress_video(final_file, compression_ratio)
       # temp_list.append(temp)
       if trim_compressed:
-        if json_data.get('trim_type', None) == 'trim_by_factor':
-          clip_length = int(json_data.get('clip_length', 30))
-          trim_factor = json_data.get('trim_factor', 's')
-          last_clip = json_data.get('last_clip', False)
-          log.info('Trimming video by factor.')
-          trim_upload = trim_by_factor(final_file, trim_factor,
-                                       clip_length, last_clip)
-        elif json_data.get('trim_type', None) == 'trim_num_parts':
-          number_of_clips = int(json_data.get('number_of_clips', 24))
-          equal_distribution = json_data.get('equal_distribution', True)
-          clip_length = int(json_data.get('clip_length', 30))
-          log.info(f'Trimming video in {number_of_clips} parts.')
-          trim_upload = trim_num_parts(final_file, int(number_of_clips),
-                                       equal_distribution, clip_length)
-        elif json_data.get('trim_type', None) == 'trim_sub_sample':
-          start_time = json_data.get('start_time', None)
-          end_time = json_data.get('end_time', None)
-          sample_start_time = json_data.get('sample_start_time', None)
-          sample_end_time = json_data.get('sample_end_time', None)
-          timestamp_format = json_data.get('timestamp_format', '%H:%M:%S')
-          log.info('Trimming portion of the video as per timestamp.')
-          trim_upload = trim_sub_sample(final_file, start_time, end_time,
-                                        sample_start_time, sample_end_time,
-                                        timestamp_format)
-        elif json_data.get('trim_type', None) == 'trim_by_points':
-          start_time = int(json_data.get('point_start_time', 0))
-          end_time = int(json_data.get('point_end_time', 30))
-          trim_factor = json_data.get('trim_factor', 's')
-          log.info('Trimming video as per start & end time.')
-          trim_upload = trim_by_points(final_file, start_time, end_time,
-                                       trim_factor)
+        trim_upload = trimming_callable(json_data, final_file, log)
     elif perform_trimming:
-      if json_data.get('trim_type', None) == 'trim_by_factor':
-        clip_length = int(json_data.get('clip_length', 30))
-        trim_factor = json_data.get('trim_factor', 's')
-        last_clip = json_data.get('last_clip', False)
-        log.info('Trimming video by factor.')
-        trim_upload = trim_by_factor(final_file, trim_factor,
-                                     clip_length, last_clip)
-      elif json_data.get('trim_type', None) == 'trim_num_parts':
-        number_of_clips = int(json_data.get('number_of_clips', 24))
-        equal_distribution = json_data.get('equal_distribution', True)
-        clip_length = int(json_data.get('clip_length', 30))
-        log.info('Trimming video in {number_of_clips} parts.')
-        trim_upload = trim_num_parts(final_file, int(number_of_clips),
-                                     equal_distribution, clip_length)
-      elif json_data.get('trim_type', None) == 'trim_sub_sample':
-        start_time = json_data.get('start_time', None)
-        end_time = json_data.get('end_time', None)
-        sample_start_time = json_data.get('sample_start_time', None)
-        sample_end_time = json_data.get('sample_end_time', None)
-        timestamp_format = json_data.get('timestamp_format', '%H:%M:%S')
-        log.info('Trimming portion of the video as per timestamp.')
-        trim_upload = trim_sub_sample(final_file, start_time, end_time,
-                                      sample_start_time, sample_end_time,
-                                      timestamp_format)
-      elif json_data.get('trim_type', None) == 'trim_by_points':
-        start_time = int(json_data.get('point_start_time', 0))
-        end_time = int(json_data.get('point_end_time', 30))
-        trim_factor = json_data.get('trim_factor', 's')
-        log.info('Trimming video as per start & end time.')
-        trim_upload = trim_by_points(final_file, start_time, end_time,
-                                      trim_factor)
+      trim_upload = trimming_callable(json_data, final_file, log)
     upload_list.extend(trim_upload)
     create_s3_bucket('AKIAR4DHCUP262T3WIUX',
                      'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
@@ -166,10 +149,10 @@ def spin(json_obj: Union[bytes, str], **kwargs) -> None:
     log.info('Created bucket on Amazon S3 for this order.')
     log.info('Uploading video to the S3 bucket.')
     for idx, file in enumerate(upload_list):
-      # url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
-      #                        'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-      #                        bucket, file)
-      # urls.append(url)
+      url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
+                             'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
+                             bucket, file)
+      urls.append(url)
       log.info(f'Uploaded {idx + 1}/{len(upload_list)} > '
                f'{os.path.basename(file)} on to S3 bucket.')
     log.info('Exporting public URLs.')
