@@ -152,7 +152,7 @@ def trigger_utc_capture(bucket_name: str,
                         camera_timeout: Union[float, int] = 30.0,
                         timestamp_format: str = '%H:%M:%S',
                         ui_timestamp_format: str = '%Y-%m-%d %H:%M:%S',
-                        log: logging.Logger = None) -> Optional[str]:
+                        log: logging.Logger = None) -> str:
   """Starts video recording as per the triggering point."""
   log = _log(__file__) if log is None else log
   run_date = datetime.now().strftime('%Y-%m-%d')
@@ -160,10 +160,19 @@ def trigger_utc_capture(bucket_name: str,
   _start_time = datetime_to_utc(_start_time,
                                 camera_timezone,
                                 ui_timestamp_format)
+  log.info('Video processing engine is scheduled to start '
+           f'recording at {_start_time}.')
   while True:
-    if str(now()) >= str(_start_time):
-      return start_live_recording(bucket_name, order_name, start_time,
-                                  end_time, camera_address, camera_username,
-                                  camera_password, camera_port, camera_timeout,
-                                  timestamp_format, log)
+    if str(now()) == str(_start_time):
+      log.info('Video processing engine has started recording.')
+      recorded_file =  start_live_recording(bucket_name, order_name, start_time,
+                                            end_time, camera_address,
+                                            camera_username, camera_password,
+                                            camera_port, camera_timeout,
+                                            timestamp_format, log)
+      log.info('Video processing engine has stopped recording.')
+      if recorded_file is None:
+        return 'RecordingError'
+      else:
+        return recorded_file
     time.sleep(1.0)
