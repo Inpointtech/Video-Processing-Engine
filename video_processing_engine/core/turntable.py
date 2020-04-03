@@ -139,10 +139,13 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
     elif perform_trimming:
       trim_upload = trimming_callable(json_data, final_file, log)
     upload_list.extend(trim_upload)
-    create_s3_bucket('AKIAR4DHCUP262T3WIUX',
-                     'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
-                     bucket, log)
-    log.info('Created bucket on Amazon S3 for this order.')
+    try:
+      create_s3_bucket('AKIAR4DHCUP262T3WIUX',
+                      'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
+                       bucket, log)
+      log.info('Created bucket on Amazon S3 for this order.')
+    except Exception:
+      pass
     log.info('Uploading video to the S3 bucket.')
     for idx, file in enumerate(upload_list):
       url = upload_to_bucket('AKIAR4DHCUP262T3WIUX',
@@ -168,4 +171,5 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
     log.error('Video processing engine interrupted.')
     exit(0)
   except Exception:
+    raise Exception
     log.critical('Something went wrong while video processing was running.')
