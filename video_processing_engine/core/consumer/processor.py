@@ -15,7 +15,7 @@ def pika_connect():
                               credentials=credentials,
                               virtual_host='testvm'))
   channel = connection.channel()
-  channel.queue_declare(queue='local_test-vpe')
+  channel.queue_declare(queue='uat_test-vpe')
   return channel
 
 
@@ -29,7 +29,7 @@ def callback(channel, method, properties, body):
 
 
 channel = pika_connect()
-channel.basic_consume(queue='local_test-vpe',
+channel.basic_consume(queue='uat_test-vpe',
                       on_message_callback=callback,
                       auto_ack=True)
 

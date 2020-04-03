@@ -23,7 +23,7 @@ def pika_connect():
                               credentials=credentials,
                               virtual_host='testvm'))
   channel = connection.channel()
-  channel.queue_declare(queue='file-transfer-Q')
+  channel.queue_declare(queue='uat_file-transfer-Q')
   return channel
 
 
@@ -65,7 +65,7 @@ def callback(channel, method, properties, body):
 
 
 channel = pika_connect()
-channel.basic_consume(queue='file-transfer-Q',
+channel.basic_consume(queue='uat_file-transfer-Q',
                       on_message_callback=callback,
                       auto_ack=True)
 
@@ -76,6 +76,7 @@ def consume():
     log.info('Downloader consumer started.')
     channel.start_consuming()
   except Exception:
+    raise Exception
     log.warning('Downloader consumer stopped after downloading huge file.')
     channel = pika_connect()
     log.info('Downloader consumer restarted.')
