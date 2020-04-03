@@ -1,4 +1,4 @@
-"""A subservice for running Video processing engine."""
+"""A subservice for processing video processing engine."""
 
 import pika
 
@@ -15,12 +15,12 @@ def pika_connect():
                               credentials=credentials,
                               virtual_host='testvm'))
   channel = connection.channel()
-  channel.queue_declare(queue='test-vpe')
+  channel.queue_declare(queue='local_test-vpe')
   return channel
 
 
 def compute(json_obj):
-  spin(json_obj)
+  spin(json_obj, log)
 
 
 def callback(channel, method, properties, body):
@@ -29,7 +29,7 @@ def callback(channel, method, properties, body):
 
 
 channel = pika_connect()
-channel.basic_consume(queue='test-vpe',
+channel.basic_consume(queue='local_test-vpe',
                       on_message_callback=callback,
                       auto_ack=True)
 
@@ -37,7 +37,7 @@ channel.basic_consume(queue='test-vpe',
 def consume():
   global channel
   try:
-    log.info('Video processing engine consumer started.')
+    log.info('Video processing engine consumer started processing this order.')
     channel.start_consuming()
   except Exception:
     log.warning('Video processing engine consumer stopped after processing '
