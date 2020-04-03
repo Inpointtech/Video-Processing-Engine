@@ -87,7 +87,7 @@ def upload_to_bucket(access_key: str,
         return None
     s3.upload_file(filename, bucket_name, s3_name,
                     ExtraArgs={'ACL': 'public-read',
-                              'ContentType': 'video/mp4'})
+                               'ContentType': 'video/mp4'})
     log.info(f'{s3_name} file uploaded on to Amazon S3 bucket.')
     return generate_s3_url(bucket_name, s3_name)
 
