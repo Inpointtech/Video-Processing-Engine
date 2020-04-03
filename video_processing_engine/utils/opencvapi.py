@@ -150,9 +150,9 @@ def camera_live(camera_address: str,
   try:
     camera_port = int(camera_port)
     socket.create_connection((camera_address, camera_port), timeout = timeout)
-    log.info('Camera connected to the network')
+    log.info('Camera connected to the network.')
     return True
   except OSError:
     pass
-  log.warning('Camera not connected to any network')
+  log.warning('Camera not connected to any network.')
   return False
