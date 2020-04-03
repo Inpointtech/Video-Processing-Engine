@@ -68,9 +68,8 @@ def trimming_callable(json_data: dict,
   return trim_upload
 
 
-def spin(json_obj: Union[bytes, str]) -> None:
+def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
   """Spin the Video processing engine."""
-  log = _log(__file__)
   try:
     start = now()
     upload_list, temp_list, trim_upload, urls = [], [], [], []
