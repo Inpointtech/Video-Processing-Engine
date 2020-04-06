@@ -14,6 +14,7 @@ from video_processing_engine.core.process.trim import (trim_by_factor,
                                                        trim_num_parts,
                                                        trim_sample_section,
                                                        trim_sub_sample)
+from video_processing_engine.core.process.stats import completion_time_calculator
 from video_processing_engine.utils.boto_wrap import (create_s3_bucket,
                                                      upload_to_bucket)
 from video_processing_engine.utils.common import now
@@ -114,6 +115,8 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
     select_sample = json_data['select_sample']
     if select_sample:
       sampling_rate = int(json_data['sampling_rate'])
+      log.info('Commencing core processes, estimated time of completion is '
+               f'{completion_time_calculator(cloned_file, sampling_rate)}.')
       log.info(f'Randomly sampling {sampling_rate}% of the original video.')
       temp = trim_sample_section(cloned_file, sampling_rate)
       temp_list.append(temp)
@@ -171,5 +174,4 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
     log.error('Video processing engine interrupted.')
     exit(0)
   except Exception:
-    raise Exception
     log.critical('Something went wrong while video processing was running.')
