@@ -1,12 +1,14 @@
 """A subservice for showing statistics the videos."""
 
 import os
+from statistics import median
 from typing import Tuple, Union
 
 import cv2
+import speedtest
 from moviepy.editor import VideoFileClip as vfc
 
-from video_processing_engine.utils.common import file_size
+from video_processing_engine.utils.common import file_size, seconds_to_datetime
 from video_processing_engine.utils.hasher import h_extension
 
 video_file_extensions = ('.3gp', '.mp4', '.avi', '.webm',
@@ -74,3 +76,14 @@ def minimum_sampling_rate(num_clips: int = 24,
                           minimum_length: int = 30) -> int:
   """Return minimum sampling rate required."""
   return num_clips * minimum_length
+
+
+def completion_time_calculator(file: str,
+                               sampling_rate: int,
+                               factor: str = 's'):
+  """Returns an approximate* time of completion of the activity."""
+  temp_etc = median((float(duration(file)), os.stat(file).st_size)) / 100000
+  trimming_bias = temp_etc + (temp_etc * 2.972158) + (sampling_rate * 0.125)
+  upload_speed = speedtest.Speedtest().upload() / 1000000
+  total_etc = (temp_etc / upload_speed) + trimming_bias
+  return seconds_to_datetime(int(total_etc))
