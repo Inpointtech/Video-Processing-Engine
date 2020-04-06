@@ -100,7 +100,7 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
       original_file = trigger(bucket, order,
                               json_data['start_time'],
                               json_data['end_time'],
-                              json_data.get('camera_timezone', 'Asia/Kolkata'),
+                              json_data.get('camera_timezone', 'UTC'),
                               json_data['camera_address'],
                               json_data.get('camera_username', 'admin'),
                               json_data['camera_password'],
