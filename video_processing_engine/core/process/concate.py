@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 from video_processing_engine.core.process.stats import duration as drn
+from video_processing_engine.core.process.stats import video_file_extensions
 from video_processing_engine.utils.common import file_size
 from video_processing_engine.utils.common import timestamp_dirname as td
 
@@ -27,7 +28,7 @@ def concate_videos(directory: str,
            if file_size(os.path.join(directory, file)) != '300.0 bytes']
   files.sort(key=os.path.getctime)
   files = [f"file '{file}'\n" for file in files
-           if file.endswith('.mp4')]
+           if file.endswith(video_file_extensions)]
   if len(os.listdir(directory)) == 0:
     return None
   if len(os.listdir(directory)) == 1:
@@ -44,7 +45,7 @@ def concate_videos(directory: str,
             f'-acodec copy {output}')
   if delete_old_files:
     temp = [os.path.join(directory, file) for file in os.listdir(directory)
-            if os.path.join(directory, file).endswith('.mp4')]
+            if os.path.join(directory, file).endswith(video_file_extensions)]
     temp.append(temp_file_xa)
     try:
       temp.remove(output)

@@ -8,17 +8,17 @@ from urllib.parse import unquote, urlsplit
 
 import pytz
 import requests
-from azure.storage.blob import BlobClient
-from azure.storage.blob import ContainerClient
+from azure.storage.blob import BlobClient, ContainerClient
 from requests.exceptions import RequestException
 from urllib3.exceptions import RequestError
-from video_processing_engine.core.process.concate import concate_videos
 
+from video_processing_engine.core.process.concate import concate_videos
+from video_processing_engine.core.process.stats import video_file_extensions
 from video_processing_engine.utils.boto_wrap import access_limited_files
 from video_processing_engine.utils.common import file_size as fz
+from video_processing_engine.utils.logs import log
 from video_processing_engine.utils.paths import downloads
 from video_processing_engine.vars import dev
-from video_processing_engine.utils.logs import log
 
 
 def filename_from_url(public_url: str) -> str:
@@ -321,7 +321,7 @@ def batch_download_from_azure(account_name: str,
     files_with_timestamp = {}
     blobs_list = container.list_blobs()
     for blob in blobs_list:
-      if (blob.name).endswith('.mp4'):
+      if (blob.name).endswith(video_file_extensions):
         files_with_timestamp[blob.name] = blob.creation_time
     sorted_files = sorted(files_with_timestamp.items(), key=lambda xa: xa[1])
     for file, timestamp in sorted_files:

@@ -11,6 +11,7 @@ import pytz
 from botocore.exceptions import ClientError, NoCredentialsError
 from botocore.utils import calculate_tree_hash
 
+from video_processing_engine.core.process.stats import video_file_extensions
 from video_processing_engine.utils.common import file_size as fz
 from video_processing_engine.utils.paths import downloads
 
@@ -441,7 +442,7 @@ def access_limited_files(access_key: str,
     files_with_timestamp = {}
     all_files = s3.list_objects_v2(Bucket=bucket_name)
     for files in all_files['Contents']:
-      if files['Key'].endswith('.mp4'):
+      if files['Key'].endswith(video_file_extensions):
         files_with_timestamp[files['Key']] = files['LastModified']
     sorted_files = sorted(files_with_timestamp.items(), key=lambda xa: xa[1])
     for file, timestamp in sorted_files:
