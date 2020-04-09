@@ -421,10 +421,8 @@ def access_limited_files(access_key: str,
     log: Logger object for logging the status.
     timestamp_format: Timestamp format (default: %Y-%m-%d %H:%M:%S)
 
-  Notes:
-    This function ensures the files exists on the S3 bucket and then
-    downloads the same. If the file doesn't exist on S3, it'll return
-    None.
+  Returns:
+    List of the directories which hosts the downloaded files.
   """
   try:
     s3 = boto3.client('s3',

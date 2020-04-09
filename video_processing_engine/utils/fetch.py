@@ -244,13 +244,13 @@ def download_using_ftp(username: str,
     return None, '[e] Error while transferring file'
 
 
-def batch_download_from_s3(access_key: str,
-                           secret_key: str,
-                           bucket_name: str,
-                           access_from: str,
-                           access_to: str,
-                           log: logging.Logger,
-                           timestamp_format: str = '%Y-%m-%d %H:%M:%S') -> List:
+def concate_batch_from_s3(access_key: str,
+                          secret_key: str,
+                          bucket_name: str,
+                          access_from: str,
+                          access_to: str,
+                          log: logging.Logger,
+                          timestamp_format: str = '%Y-%m-%d %H:%M:%S') -> List:
   """Downloads multiple files from S3 and concatenate them.
 
   Download multiple files from S3 bucket for particular timeframe and
@@ -265,18 +265,16 @@ def batch_download_from_s3(access_key: str,
     log: Logger object for logging the status.
     timestamp_format: Timestamp format (default: %Y-%m-%d %H:%M:%S)
 
-  Notes:
-    This function ensures the files exists on the S3 bucket and then
-    downloads the same. If the file doesn't exist on S3, it'll return
-    None.
+  Returns:
+    List of the concatenated files.
   """
   log.info(f'Downloading files from "{bucket_name}" for range {access_from} '
-           f'to {access_to}.')
+           f'to {access_to} from Amazon S3.')
   list_of_dirs = access_limited_files(access_key, secret_key, bucket_name,
                                       access_from, access_to, log,
                                       timestamp_format)
-  log.info(f'{len(list_of_dirs)} files downloaded from Amazon S3.')
   if len(list_of_dirs) > 0:
+    log.info('Concatenating files in their subsequent directories.')
     return [concate_videos(idx) for idx in list_of_dirs]
   else:
     log.warning('0 files downloaded. Returning empty list.')
@@ -290,11 +288,11 @@ def batch_download_from_azure(account_name: str,
                               access_to: str,
                               log: logging.Logger,
                               timestamp_format: str = '%Y-%m-%d %H:%M:%S',
-                              download_path: str = downloads) -> Tuple:
-  """Download multiple files from Microsoft Azure and concatenate them.
+                              download_path: str = downloads) -> List:
+  """Download multiple files from Microsoft Azure.
 
   Download multiple files from Azure Blob container for particular
-  timeframe and concatenate them resulting into a single file.
+  timeframe.
 
   Args:
     account_name: Azure account name.
@@ -306,7 +304,7 @@ def batch_download_from_azure(account_name: str,
     download_path: Path (default: ./downloads/) for saving file.
 
   Returns:
-    Boolean value if the file is downloaded or not.
+    List of the directories which hosts the downloaded files.
   """
   # You can find the reference code here:
   # https://pypi.org/project/azure-storage-blob/
@@ -333,15 +331,48 @@ def batch_download_from_azure(account_name: str,
         if not os.path.isdir(blob_style_dir):
           os.makedirs(blob_style_dir)
         download_from_azure(account_name, account_key, container_name,
-                            file, file[:-4], log, blob_style_dir)
-
-  except Exception as error:
+                            file, os.path.basename(file[:-4]), log,
+                            blob_style_dir)
+    return list(set(concate_dir))
+  except Exception:
     log.error('File download from Microsoft Azure failed because of poor '
               'network connectivity.')
-    return None, '[e] Error while downloading file'
+    return []
 
 
-log = log(__file__)
-batch_download_from_azure('b0videoprocessingengine',
-                          'PWqNC8JKvd+aKu/SvkSunyv7Mx8oRTRuAOkz+vSu66IcbOzqxAEYswkB4PpMfK5RZiM7GhJlWXnts7ksmIn/pA==',
-                          'video-processing-engine-container', '2020-04-08 19:12:13', '2020-04-24 09:12:13', log)
+def concate_batch_from_azure(account_name: str,
+                             account_key: str,
+                             container_name: str,
+                             access_from: str,
+                             access_to: str,
+                             log: logging.Logger,
+                             timestamp_format: str = '%Y-%m-%d %H:%M:%S'
+                             ) -> List:
+  """Downloads multiple files from Azure and concatenate them.
+
+  Download multiple files from Azure bucket for particular timeframe and
+  concatenate them resulting into a single file in each directory.
+
+  Args:
+    account_name: Azure account name.
+    account_key: Azure account key.
+    container_name: Container from which blob needs to be downloaded.
+    access_from: Datetime from when to start fetching files.
+    access_to: Datetime till when to fetch files.
+    log: Logger object for logging the status.
+    timestamp_format: Timestamp format (default: %Y-%m-%d %H:%M:%S)
+
+  Returns:
+    List of the concatenated files.
+  """
+  log.info(f'Downloading files "{container_name}" for range {access_from} '
+           f'to {access_to} from Microsoft Azure.')
+  list_of_dirs = batch_download_from_azure(account_name, account_key,
+                                           container_name, access_from,
+                                           access_to, log, timestamp_format)
+  if len(list_of_dirs) > 0:
+    log.info('Concatenating files in their subsequent directories.')
+    return [concate_videos(idx) for idx in list_of_dirs]
+  else:
+    log.warning('0 files downloaded. Returning empty list.')
+    return []
