@@ -3,15 +3,16 @@
 import logging
 import math
 import os
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 import boto3
+import pytz
 from botocore.exceptions import ClientError, NoCredentialsError
 from botocore.utils import calculate_tree_hash
 
 from video_processing_engine.utils.common import file_size as fz
 from video_processing_engine.utils.paths import downloads
-from video_processing_engine.vars import dev
 
 
 def create_s3_bucket(access_key: str,
@@ -398,3 +399,60 @@ def upload_to_vault(access_key: str,
                                 checksum=checksum)
     log.info(f'"{file_name}" file archived on AWS S3 Glacier.')
     return complete_upload
+
+
+def access_limited_files(access_key: str,
+                         secret_key: str,
+                         bucket_name: str,
+                         access_from: str,
+                         access_to: str,
+                         log: logging.Logger,
+                         timestamp_format: str = '%Y-%m-%d %H:%M:%S') -> List:
+  """Access files from S3 bucket for particular timeframe.
+
+  Access and download file from S3 bucket for particular timeframe.
+
+  Args:
+    access_key: AWS access key.
+    secret_key: AWS saccess_key: str,
+    bucket_name: Bucket to search and download from.
+    access_from: Datetime from when to start fetching files.
+    access_to: Datetime till when to fetch files.
+    log: Logger object for logging the status.
+    timestamp_format: Timestamp format (default: %Y-%m-%d %H:%M:%S)
+
+  Notes:
+    This function ensures the files exists on the S3 bucket and then
+    downloads the same. If the file doesn't exist on S3, it'll return
+    None.
+  """
+  try:
+    s3 = boto3.client('s3',
+                      aws_access_key_id=access_key,
+                      aws_secret_access_key=secret_key)
+  except (ClientError, NoCredentialsError):
+    log.error('Wrong credentials used to access the AWS account.')
+    return []
+  else:
+    limit_from = datetime.strptime(
+        access_from, timestamp_format).replace(tzinfo=pytz.UTC)
+    limit_till = datetime.strptime(
+        access_to, timestamp_format).replace(tzinfo=pytz.UTC)
+    bucket_dir = os.path.join(downloads, bucket_name)
+    concate_dir = []
+    files_with_timestamp = {}
+    all_files = s3.list_objects_v2(Bucket=bucket_name)
+    for files in all_files['Contents']:
+      if files['Key'].endswith('.mp4'):
+        files_with_timestamp[files['Key']] = files['LastModified']
+    sorted_files = sorted(files_with_timestamp.items(), key=lambda xa: xa[1])
+    for file, timestamp in sorted_files:
+      if timestamp > limit_from and timestamp < limit_till:
+        s3_style_dir = os.path.join(bucket_dir, os.path.dirname(file))
+        concate_dir.append(s3_style_dir)
+        if not os.path.isdir(s3_style_dir):
+          os.makedirs(s3_style_dir)
+        s3.download_file(bucket_name, file, os.path.join(s3_style_dir,
+                                          os.path.basename(file)))
+        log.info(f'File "{file}" downloaded from Amazon S3.')
+    return list(set(concate_dir))

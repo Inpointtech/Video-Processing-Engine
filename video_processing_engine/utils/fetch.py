@@ -2,17 +2,23 @@
 
 import logging
 import os
-from typing import Tuple
+from datetime import datetime
+from typing import List, Tuple
 from urllib.parse import unquote, urlsplit
 
+import pytz
 import requests
 from azure.storage.blob import BlobClient
+from azure.storage.blob import ContainerClient
 from requests.exceptions import RequestException
 from urllib3.exceptions import RequestError
+from video_processing_engine.core.process.concate import concate_videos
 
+from video_processing_engine.utils.boto_wrap import access_limited_files
 from video_processing_engine.utils.common import file_size as fz
 from video_processing_engine.utils.paths import downloads
 from video_processing_engine.vars import dev
+from video_processing_engine.utils.logs import log
 
 
 def filename_from_url(public_url: str) -> str:
@@ -236,3 +242,106 @@ def download_using_ftp(username: str,
     log.error('File transfer via FTP failed because of poor network '
               'connectivity.')
     return None, '[e] Error while transferring file'
+
+
+def batch_download_from_s3(access_key: str,
+                           secret_key: str,
+                           bucket_name: str,
+                           access_from: str,
+                           access_to: str,
+                           log: logging.Logger,
+                           timestamp_format: str = '%Y-%m-%d %H:%M:%S') -> List:
+  """Downloads multiple files from S3 and concatenate them.
+
+  Download multiple files from S3 bucket for particular timeframe and
+  concatenate them resulting into a single file in each directory.
+
+  Args:
+    access_key: AWS access key.
+    secret_key: AWS saccess_key: str,
+    bucket_name: Bucket to search and download from.
+    access_from: Datetime from when to start fetching files.
+    access_to: Datetime till when to fetch files.
+    log: Logger object for logging the status.
+    timestamp_format: Timestamp format (default: %Y-%m-%d %H:%M:%S)
+
+  Notes:
+    This function ensures the files exists on the S3 bucket and then
+    downloads the same. If the file doesn't exist on S3, it'll return
+    None.
+  """
+  log.info(f'Downloading files from "{bucket_name}" for range {access_from} '
+           f'to {access_to}.')
+  list_of_dirs = access_limited_files(access_key, secret_key, bucket_name,
+                                      access_from, access_to, log,
+                                      timestamp_format)
+  log.info(f'{len(list_of_dirs)} files downloaded from Amazon S3.')
+  if len(list_of_dirs) > 0:
+    return [concate_videos(idx) for idx in list_of_dirs]
+  else:
+    log.warning('0 files downloaded. Returning empty list.')
+    return []
+
+
+def batch_download_from_azure(account_name: str,
+                              account_key: str,
+                              container_name: str,
+                              access_from: str,
+                              access_to: str,
+                              log: logging.Logger,
+                              timestamp_format: str = '%Y-%m-%d %H:%M:%S',
+                              download_path: str = downloads) -> Tuple:
+  """Download multiple files from Microsoft Azure and concatenate them.
+
+  Download multiple files from Azure Blob container for particular
+  timeframe and concatenate them resulting into a single file.
+
+  Args:
+    account_name: Azure account name.
+    account_key: Azure account key.
+    container_name: Container from which blob needs to be downloaded.
+    blob_name: Blob to download from Microsoft Azure.
+    file_name: Filename for the downloaded file.
+    log: Logger object for logging the status.
+    download_path: Path (default: ./downloads/) for saving file.
+
+  Returns:
+    Boolean value if the file is downloaded or not.
+  """
+  # You can find the reference code here:
+  # https://pypi.org/project/azure-storage-blob/
+  try:
+    connection_string = generate_connection_string(account_name, account_key)
+    container = ContainerClient.from_connection_string(connection_string,
+                                                  container_name=container_name)
+    limit_from = datetime.strptime(
+        access_from, timestamp_format).replace(tzinfo=pytz.UTC)
+    limit_till = datetime.strptime(
+        access_to, timestamp_format).replace(tzinfo=pytz.UTC)
+    container_dir = os.path.join(downloads, container_name)
+    concate_dir = []
+    files_with_timestamp = {}
+    blobs_list = container.list_blobs()
+    for blob in blobs_list:
+      if (blob.name).endswith('.mp4'):
+        files_with_timestamp[blob.name] = blob.creation_time
+    sorted_files = sorted(files_with_timestamp.items(), key=lambda xa: xa[1])
+    for file, timestamp in sorted_files:
+      if timestamp > limit_from and timestamp < limit_till:
+        blob_style_dir = os.path.join(container_dir, os.path.dirname(file))
+        concate_dir.append(blob_style_dir)
+        if not os.path.isdir(blob_style_dir):
+          os.makedirs(blob_style_dir)
+        download_from_azure(account_name, account_key, container_name,
+                            file, file[:-4], log, blob_style_dir)
+
+  except Exception as error:
+    log.error('File download from Microsoft Azure failed because of poor '
+              'network connectivity.')
+    return None, '[e] Error while downloading file'
+
+
+log = log(__file__)
+batch_download_from_azure('b0videoprocessingengine',
+                          'PWqNC8JKvd+aKu/SvkSunyv7Mx8oRTRuAOkz+vSu66IcbOzqxAEYswkB4PpMfK5RZiM7GhJlWXnts7ksmIn/pA==',
+                          'video-processing-engine-container', '2020-04-08 19:12:13', '2020-04-24 09:12:13', log)
