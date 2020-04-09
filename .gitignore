@@ -141,5 +141,5 @@ docs/
 vpe.code-workspace
 logs/*.log
 live/*.mp4
-downloads/*.mp4
+/**/*.mp4
 reports/*csv
