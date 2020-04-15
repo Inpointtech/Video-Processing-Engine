@@ -35,7 +35,7 @@ def redact_faces(file: str,
   dynamic_conf = 0.1
   x0, y0, x1, y1 = 0, 0, 0, 0
   boxes, temp_csv_entries = [], []
-  directory = os.path.join(os.path.dirname(file), Path(file).stem)
+  directory = os.path.join(os.path.dirname(file), f'{Path(file).stem}/redact')
   if not os.path.isdir(directory):
     os.mkdir(directory)
   temp_file = os.path.join(directory, f'{Path(file).stem}.mp4')
@@ -90,7 +90,6 @@ def redact_faces(file: str,
               dynamic_conf = 0.15
           boxes.append([x1, y1])
           status = face_meta(len(boxes), stream.get(cv2.CAP_PROP_POS_MSEC))
-          log.info(status)
           temp_csv_entries.append(status)
       else:
         face_cascade = cv2.CascadeClassifier(frontal_haar)
@@ -108,7 +107,6 @@ def redact_faces(file: str,
             pass
           boxes.append([x1, y1])
           status = face_meta(len(boxes), stream.get(cv2.CAP_PROP_POS_MSEC))
-          log.info(status)
           temp_csv_entries.append(status)
       boxes = []
       save.write(frame)
@@ -127,5 +125,6 @@ def redact_faces(file: str,
     log.info('Applying H264 encoding for bypassing browser issues.')
     os.system(f'ffmpeg -loglevel error -y -i {filename(temp_file, 1)} -vcodec '
               f'libx264 {temp_file}')
+    return temp_file
   except Exception as error:
     log.critical(f'Something went wrong because of {error}')

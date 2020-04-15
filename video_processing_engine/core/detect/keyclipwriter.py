@@ -35,9 +35,9 @@ class KeyClipWriter:
     # to the video file
     self.recording = True
     self.writer = cv2.VideoWriter(outputPath, fourcc, fps,
-                                  (self.frames[0].shape[1], self.frames[0].shape[0]), True)
+                                  (self.frames[0].shape[1],
+                                   self.frames[0].shape[0]), True)
     self.Q = Queue()
-
     # loop over the frames in the deque structure and add them
     # to the queue
     for i in range(len(self.frames), 0, -1):

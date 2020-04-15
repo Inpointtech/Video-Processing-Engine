@@ -15,6 +15,7 @@ prototxt = os.path.join(models, md.FACE_PROTOTEXT)
 frontal_haar = os.path.join(models, md.FRONTAL_HAAR)
 frontal_haar_2 = os.path.join(models, md.FRONTAL_HAAR_2)
 profile_haar = os.path.join(models, md.PROFILE_HAAR)
+reference_video = os.path.join(models, md.REFERENCE_VIDEO)
 
 # Path where all the downloaded files are stored.
 downloads = os.path.join(parent_path, 'downloads')

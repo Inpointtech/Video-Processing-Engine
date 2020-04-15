@@ -11,8 +11,15 @@ from moviepy.editor import VideoFileClip as vfc
 from video_processing_engine.utils.common import file_size, seconds_to_datetime
 from video_processing_engine.utils.hasher import h_extension
 
-video_file_extensions = ('.3gp', '.mp4', '.avi', '.webm',
-                         '.mov', '.mkv', '.ogv', '.ts')
+video_file_extensions = ('.3gp', '.mp4', '.avi', '.webm', '.divx', '.f4v',
+                         '.flv', '.m4v', '.mpg', '.mts', '.mxf', '.ogm', '.qt',
+                         '.vob', '.wmv', '.3g2', '.3gpp', '.mov', '.mkv',
+                         '.h265', '.ogv', '.ts', '.dat', '.m2ts', '.m2v',
+                         '.3GP', '.MP4', '.AVI', '.WEBM', '.DIVX', '.F4V',
+                         '.FLV', '.M4V', '.MPG', '.MTS', '.MXF', '.OGM', '.QT',
+                         '.VOB', '.WMV', '.3G2', '.3GPP', '.MOV', '.MKV',
+                         '.OGV', '.TS', '.DAT', '.M2TS', '.M2V', '.H265',
+                         '.265')
 
 
 def codec(file: str) -> str:
@@ -83,7 +90,7 @@ def completion_time_calculator(file: str,
                                factor: str = 's'):
   """Returns an approximate* time of completion of the activity."""
   temp_etc = median((float(duration(file)), os.stat(file).st_size)) / 100000
-  trimming_bias = temp_etc + (temp_etc * 2.972158) + (sampling_rate * 0.125)
+  trimming_bias = temp_etc + (temp_etc * 1.35298) + (sampling_rate * 0.125)
   upload_speed = speedtest.Speedtest().upload() / 1000000
   total_etc = (temp_etc / upload_speed) + trimming_bias
   return seconds_to_datetime(int(total_etc))

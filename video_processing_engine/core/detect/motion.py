@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import cv2
 import imutils
@@ -30,13 +30,13 @@ def track_motion(file: str,
                  resize: bool = True,
                  resize_width: int = 640,
                  debug_mode: bool = True,
-                 log: logging.Logger = None) -> str:
+                 log: logging.Logger = None) -> Optional[str]:
   """Track motion in the video using Background Subtraction method."""
   log = _log(__file__) if log is None else log
   kcw = KeyClipWriter(bufSize=32)
   consec_frames, x0, y0, x1, y1 = 0, 0, 0, 0, 0
   boxes, temp_csv_entries = [], []
-  directory = os.path.join(os.path.dirname(file), Path(file).stem)
+  directory = os.path.join(os.path.dirname(file), f'{Path(file).stem}/motion')
   if not os.path.isdir(directory):
     os.mkdir(directory)
   temp_file = os.path.join(directory, f'{Path(file).stem}.mp4')
@@ -81,14 +81,14 @@ def track_motion(file: str,
           idx += 1
         boxes.append([x1, y1])
         status = motion_meta(len(boxes), stream.get(cv2.CAP_PROP_POS_MSEC))
-        log.info(status)
+        # log.info(status)
         temp_csv_entries.append(status)
       boxes = []
       if update_frame:
         consec_frames += 1
       kcw.update(frame)
       if kcw.recording and consec_frames == 32:
-        log.info('Saving portion of video with detected motion.')
+        log.info('Extracting buffered portion of video with detected motion.')
         kcw.finish()
       if debug_mode:
         cv2.imshow('Video Processing Engine - Motion Detection', frame)
@@ -109,14 +109,6 @@ def track_motion(file: str,
                   f'libx264 {temp_file}')
         log.info('Cleaning up archived files.')
         os.remove(concate_temp)
-        temp_path = os.path.dirname(os.path.dirname(temp_file))
-        move_file = os.path.join(temp_path, os.path.basename(temp_file))
-        shutil.move(temp_file, move_file)
-        shutil.rmtree(os.path.dirname(temp_file))
-        return move_file
-      else:
-        return 'MotionDetectionError'
-    else:
-      return 'ConcatenationError'
+        return temp_file
   except Exception as error:
     log.critical(f'Something went wrong because of {error}')

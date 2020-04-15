@@ -1,5 +1,6 @@
 """Complete video processing engine in one go."""
 
+import shutil
 import csv
 import json
 import logging
@@ -22,9 +23,10 @@ from video_processing_engine.utils.generate import (bucket_name, order_name,
                                                     video_type)
 from video_processing_engine.utils.local import (
     create_copy, rename_aaaa_file, rename_original_file)
-from video_processing_engine.utils.logs import log as _log
+from video_processing_engine.utils.logs import log
 from video_processing_engine.utils.paths import downloads, reports
 from video_processing_engine.vars import dev
+from video_processing_engine.core.redact.faces import redact_faces
 
 
 def trimming_callable(json_data: dict,
@@ -109,17 +111,33 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
                               json_data.get('timestamp_format', '%H:%M:%S'),
                               log)
     cloned_file = rename_original_file(original_file, bucket, order)
+    temp_file = str(cloned_file)
     log.info('Created backup of the original video.')
     # TODO(xames3): Add code to move this file to AWS Glacier.
     archived_file = create_copy(cloned_file)
-    select_sample = json_data['select_sample']
-    if select_sample:
-      sampling_rate = int(json_data['sampling_rate'])
-      log.info('Commencing core processes, estimated time of completion is '
-               f'{completion_time_calculator(cloned_file, sampling_rate)}.')
-      log.info(f'Randomly sampling {sampling_rate}% of the original video.')
-      temp = trim_sample_section(cloned_file, sampling_rate)
-      temp_list.append(temp)
+    sampling_rate = int(json_data['sampling_rate'])
+    log.info('Commencing core processes, estimated time of completion is '
+             f'{completion_time_calculator(cloned_file, sampling_rate)}.')
+    if json_data.get('analyze_motion', False):
+      cloned_file = track_motion(cloned_file, log=log, debug_mode=False)
+      log.info('Fixing up the symbolic link of the motion detected video.')
+      shutil.move(cloned_file, temp_file)
+      log.info('Symbolic link has been restored for the motion detected video.')
+      cloned_file = temp_file
+    else:
+      log.info('Skipping motion analysis.')
+    log.info(f'Randomly sampling {sampling_rate}% of the original video.')
+    temp = trim_sample_section(temp_file, sampling_rate)
+    temp_list.append(temp)
+    if json_data.get('analyze_face', False):
+      temp_file = str(cloned_file)
+      cloned_file = redact_faces(cloned_file, log=log, debug_mode=False)
+      log.info('Fixing up the symbolic link of the redacted video.')
+      shutil.move(cloned_file, temp_file)
+      log.info('Symbolic link has been restored for the redacted video.')
+      cloned_file = temp_file
+    else:
+      log.info('Skipping face redaction.')
     perform_compression = json_data.get('perform_compression', True)
     perform_trimming = json_data.get('perform_trimming', True)
     if perform_trimming:
@@ -131,7 +149,6 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
                                   video_type(perform_compression,
                                              perform_trimming,
                                              trim_compressed))
-    # final_file = track_motion(final_file, log=log)
     upload_list.append(final_file)
     if perform_compression:
       compression_ratio = int(json_data.get('compression_ratio', 50))
@@ -144,7 +161,7 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
     upload_list.extend(trim_upload)
     try:
       create_s3_bucket('AKIAR4DHCUP262T3WIUX',
-                      'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
+                       'B2ii3+34AigsIx0wB1ZU01WLNY6DYRbZttyeTo+5',
                        bucket, log)
       log.info('Created bucket on Amazon S3 for this order.')
     except Exception:
@@ -173,5 +190,6 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
   except KeyboardInterrupt:
     log.error('Video processing engine interrupted.')
     exit(0)
-  except Exception:
+  except Exception as error:
+    log.exception(error)
     log.critical('Something went wrong while video processing was running.')
