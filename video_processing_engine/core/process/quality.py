@@ -37,7 +37,7 @@ def calc_ssim_psnr(file: str,
                    dry_run: bool = False, verbose: bool = False) -> Tuple:
   """Calculate SSIM and PSNR values for the video."""
   psnr_data, ssim_data = [], []
-  temp_file_name_psnr, temp_file_name_ssim = 'xa', 'xa'
+  temp_file_name_psnr, temp_file_name_ssim, rating = 'xa', 'xa', 'xa'
   try:
     temp_dir = tempfile.gettempdir()
     temp_file_name_ssim = os.path.join(temp_dir,
@@ -68,7 +68,7 @@ def calc_ssim_psnr(file: str,
         with open(temp_file_name_ssim, 'r') as in_ssim:
           lines = in_ssim.readlines()
           for line in lines:
-            line = line.strip().split(' (')[0]  # remove excess
+            line = line.strip().split(' (')[0]
             fields = line.split(' ')
             frame_data = {}
             for field in fields:
@@ -86,5 +86,15 @@ def calc_ssim_psnr(file: str,
     if os.path.isfile(temp_file_name_ssim):
       os.remove(temp_file_name_ssim)
   scores = {'ssim': ssim_data, 'psnr': psnr_data}
-  return (float((scores['psnr'][0]['psnr_avg'])),
-          float((scores['ssim'][0]['ssim_avg'])))
+  score = float((scores['ssim'][0]['ssim_avg']))
+  if score < 0.5:
+    rating = 'Bad'
+  elif 0.88 > score > 0.5:
+    rating = 'Poor'
+  elif 0.95 > score > 0.88:
+    rating = 'Fair'
+  elif 0.99 > score > 0.95:
+    rating = 'Good'
+  elif score > 1:
+    rating = 'Excellent'
+  return (score * 100, rating)
