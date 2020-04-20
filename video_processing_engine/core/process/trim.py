@@ -86,7 +86,7 @@ def trim_num_parts(file: str,
 
 
 def trim_sample_section(file: str,
-                        sampling_rate: int) -> str:
+                        sampling_rate: float) -> str:
   """Trim a sample portion of the video as per the sampling rate.
   Trims a random sample portion of the video as per the sampling rate.
   Args:

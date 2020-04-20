@@ -86,7 +86,7 @@ def minimum_sampling_rate(num_clips: int = 24,
 
 
 def completion_time_calculator(file: str,
-                               sampling_rate: int,
+                               sampling_rate: float,
                                factor: str = 's'):
   """Returns an approximate* time of completion of the activity."""
   temp_etc = median((float(duration(file)), os.stat(file).st_size)) / 100000
