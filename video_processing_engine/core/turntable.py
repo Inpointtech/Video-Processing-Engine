@@ -1,21 +1,23 @@
 """Complete video processing engine in one go."""
 
-import shutil
 import csv
 import json
 import logging
 import os
+import shutil
 from typing import List, Optional, Union
 
 from video_processing_engine.core.capture.recording import trigger_utc_capture
 from video_processing_engine.core.detect.motion import track_motion
 from video_processing_engine.core.process.compress import compress_video
+from video_processing_engine.core.process.stats import \
+    completion_time_calculator
 from video_processing_engine.core.process.trim import (trim_by_factor,
                                                        trim_by_points,
                                                        trim_num_parts,
                                                        trim_sample_section,
                                                        trim_sub_sample)
-from video_processing_engine.core.process.stats import completion_time_calculator
+from video_processing_engine.core.redact.faces import redact_faces
 from video_processing_engine.utils.boto_wrap import (create_s3_bucket,
                                                      upload_to_bucket)
 from video_processing_engine.utils.common import now
@@ -26,7 +28,6 @@ from video_processing_engine.utils.local import (
 from video_processing_engine.utils.logs import log
 from video_processing_engine.utils.paths import downloads, reports
 from video_processing_engine.vars import dev
-from video_processing_engine.core.redact.faces import redact_faces
 
 
 def trimming_callable(json_data: dict,
@@ -115,7 +116,7 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
     log.info('Created backup of the original video.')
     # TODO(xames3): Add code to move this file to AWS Glacier.
     archived_file = create_copy(cloned_file)
-    sampling_rate = int(json_data['sampling_rate'])
+    sampling_rate = float(json_data['sampling_rate'])
     log.info('Commencing core processes, estimated time of completion is '
              f'{completion_time_calculator(cloned_file, sampling_rate)}.')
     if json_data.get('analyze_motion', False):
@@ -151,9 +152,8 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
                                              trim_compressed))
     upload_list.append(final_file)
     if perform_compression:
-      compression_ratio = int(json_data.get('compression_ratio', 50))
-      # temp = compress_video(final_file, compression_ratio)
-      # temp_list.append(temp)
+      log.info('Compressing video as required.')
+      final_file = compress_video(final_file, log)
       if trim_compressed:
         trim_upload = trimming_callable(json_data, final_file, log)
     elif perform_trimming:
