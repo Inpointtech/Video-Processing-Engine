@@ -3,7 +3,6 @@
 import csv
 import logging
 import os
-import shutil
 from pathlib import Path
 from typing import Optional, Union
 
@@ -12,11 +11,12 @@ import imutils
 
 from video_processing_engine.core.detect.keyclipwriter import KeyClipWriter
 from video_processing_engine.core.process.concate import concate_videos
+from video_processing_engine.utils.common import seconds_to_datetime as s2d
 from video_processing_engine.utils.local import filename
 from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.opencvapi import (disconnect,
-                                                     draw_bounding_box, rescale)
-from video_processing_engine.utils.common import seconds_to_datetime as s2d
+                                                     draw_bounding_box,
+                                                     rescale)
 from video_processing_engine.vars import dev
 
 
@@ -36,10 +36,10 @@ def track_motion(file: str,
   kcw = KeyClipWriter(bufSize=32)
   consec_frames, x0, y0, x1, y1 = 0, 0, 0, 0, 0
   boxes, temp_csv_entries = [], []
-  directory = os.path.join(os.path.dirname(file), f'{Path(file).stem}/motion')
+  directory = os.path.join(os.path.dirname(file), f'{Path(file).stem}')
   if not os.path.isdir(directory):
     os.mkdir(directory)
-  temp_file = os.path.join(directory, f'{Path(file).stem}.mp4')
+  temp_file = os.path.join(directory, f'{Path(file).stem}_motion.mp4')
   idx = 1
   if debug_mode:
     log.info('Debug mode - Enabled.')
@@ -96,6 +96,8 @@ def track_motion(file: str,
         disconnect(stream)
     if kcw.recording:
       kcw.finish()
+    if len(os.listdir(directory)) < 1:
+      return file
     concate_temp = concate_videos(directory, delete_old_files=True)
     with open(os.path.join(directory, f'{Path(file).stem}.csv'), 'a',
               encoding=dev.DEF_CHARSET) as csv_file:
