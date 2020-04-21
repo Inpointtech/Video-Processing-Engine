@@ -19,6 +19,28 @@ from video_processing_engine.utils.paths import (caffemodel, frontal_haar,
 from video_processing_engine.vars import color, dev
 
 
+def pixelate(face_roi):
+  """Pixelate faces like in ..."""
+  # You can find the reference code here:
+  # https://www.pyimagesearch.com/2020/04/06/blur-and-anonymize-faces-with-opencv-and-python/
+  height, width, _ = face_roi.shape
+  blocks = width * 0.01
+  x_steps = np.linspace(0, width, 8, dtype='int')
+  y_steps = np.linspace(0, height, 8, dtype='int')
+  # Looping over blocks in both X & Y direction.
+  for y_idx in range(1, len(y_steps)):
+    for x_idx in range(1, len(x_steps)):
+      x0 = x_steps[x_idx - 1]
+      y0 = y_steps[y_idx - 1]
+      x1 = x_steps[x_idx]
+      y1 = y_steps[y_idx]
+      roi = face_roi[y0:y1, x0:x1]
+      B, G, R = [int(idx) for idx in cv2.mean(roi)[:3]]
+      cv2.rectangle(face_roi, (x0, y0), (x1, y1), (B, G, R), -1)
+  # Pixelated blurred face_roi
+  return face_roi
+
+
 def face_meta(boxes: int, occurence: Union[float, int]) -> str:
   box = 'Face' if boxes == 1 else 'Faces'
   return f'{boxes} {box} detected at {s2d(int(occurence / 1000))}'
@@ -26,6 +48,7 @@ def face_meta(boxes: int, occurence: Union[float, int]) -> str:
 
 def redact_faces(file: str,
                  use_ml_model: bool = True,
+                 smooth_blur: bool = True,
                  resize: bool = True,
                  resize_width: int = 640,
                  debug_mode: bool = True,
@@ -35,10 +58,10 @@ def redact_faces(file: str,
   dynamic_conf = 0.1
   x0, y0, x1, y1 = 0, 0, 0, 0
   boxes, temp_csv_entries = [], []
-  directory = os.path.join(os.path.dirname(file), f'{Path(file).stem}/redact')
+  directory = os.path.join(os.path.dirname(file), f'{Path(file).stem}')
   if not os.path.isdir(directory):
     os.mkdir(directory)
-  temp_file = os.path.join(directory, f'{Path(file).stem}.mp4')
+  temp_file = os.path.join(directory, f'{Path(file).stem}_redact.mp4')
   if debug_mode:
     log.info('Debug mode - Enabled.')
   log.info(f'Redacting faces from "{os.path.basename(file)}".')
@@ -64,7 +87,7 @@ def redact_faces(file: str,
       height, width = frame.shape[:2]
       if use_ml_model:
         blob = cv2.dnn.blobFromImage(frame, 1.0, (width, height),
-                                    (104.0, 177.0, 123.0))
+                                     (104.0, 177.0, 123.0))
         net.setInput(blob)
         detected_faces = net.forward()
         bounding_boxes = []
@@ -78,11 +101,15 @@ def redact_faces(file: str,
             x_bias, y_bias = (x1 - x0) * 0.04, (y1 - y0) * 0.04
             (x0, y0), (x1, y1) = ((int(x0 + x_bias), int(y0 + y_bias)),
                                   (int(x1 - x_bias), int(y1 - y_bias)))
+            face = frame[y0:y1, x0:x1]
             if debug_mode:
               draw_bounding_box(frame, (x0, y0), (x1, y1), color.red)
             try:
-              frame[y0:y1, x0:x1] = cv2.GaussianBlur(frame[y0:y1, x0:x1],
-                                                     (21, 21), 0)
+              if smooth_blur:
+                frame[y0:y1, x0:x1] = cv2.GaussianBlur(frame[y0:y1, x0:x1],
+                                                       (21, 21), 0)
+              else:
+                frame[y0:y1, x0:x1] = pixelate(face)
             except Exception:
               pass
             dynamic_conf = detected_faces[0, 0, idx, 2]
@@ -99,10 +126,14 @@ def redact_faces(file: str,
           if debug_mode:
             draw_bounding_box(frame, (x0, y0), (x0 + x1, y0 + y1), color.red)
           try:
-            frame[y0:(y0 + y1),
-                  x0:(x0 + x1)] = cv2.GaussianBlur(frame[y0:(y0 + y1),
-                                                         x0:(x0 + x1)],
-                                                   (21, 21), 0)
+            if smooth_blur:
+              frame[y0:(y0 + y1),
+                    x0:(x0 + x1)] = cv2.GaussianBlur(frame[y0:(y0 + y1),
+                                                           x0:(x0 + x1)],
+                                                     (21, 21), 0)
+            else:
+              frame[y0:(y0 + y1),
+                    x0:(x0 + x1)] = pixelate(frame[y0:(y0 + y1), x0:(x0 + x1)])
           except Exception:
             pass
           boxes.append([x1, y1])
