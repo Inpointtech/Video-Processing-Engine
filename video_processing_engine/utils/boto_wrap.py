@@ -1,5 +1,6 @@
 """Utility for work as a wrapper around Amazon's Boto3 API."""
 
+import csv
 import logging
 import math
 import os
@@ -14,6 +15,8 @@ from botocore.utils import calculate_tree_hash
 from video_processing_engine.core.process.stats import video_file_extensions
 from video_processing_engine.utils.common import file_size as fz
 from video_processing_engine.utils.paths import downloads
+from video_processing_engine.utils.logs import log as _log
+from video_processing_engine.vars import dev
 
 
 def create_s3_bucket(access_key: str,
@@ -425,6 +428,7 @@ def access_limited_files(access_key: str,
   Returns:
     List of the directories which hosts the downloaded files.
   """
+  _glob = []
   try:
     s3 = boto3.client('s3',
                       aws_access_key_id=access_key,
@@ -441,6 +445,16 @@ def access_limited_files(access_key: str,
     concate_dir = []
     files_with_timestamp = {}
     all_files = s3.list_objects_v2(Bucket=bucket_name)
+    unsupported = [idx['Key']
+                   for idx in all_files['Contents']
+                   if not idx['Key'].endswith(video_file_extensions)]
+    unsupported = list(set(map(lambda x: os.path.splitext(x)[1], unsupported)))
+    unsupported = [idx for idx in unsupported if idx is not '']
+    if len(unsupported) > 1:
+      log.info(f'Unsupported video formats like "{unsupported[0]}", '
+               f'"{unsupported[1]}", etc. will be skipped.')
+    else:
+      log.info(f'Files ending with "{unsupported[0]}" will be skipped.')
     for files in all_files['Contents']:
       if files['Key'].endswith(video_file_extensions):
         files_with_timestamp[files['Key']] = files['LastModified']
@@ -451,7 +465,16 @@ def access_limited_files(access_key: str,
         concate_dir.append(s3_style_dir)
         if not os.path.isdir(s3_style_dir):
           os.makedirs(s3_style_dir)
-        s3.download_file(bucket_name, file, os.path.join(s3_style_dir,
-                                          os.path.basename(file)))
+        s3.download_file(bucket_name, file,
+                         os.path.join(s3_style_dir, os.path.basename(file)))
         log.info(f'File "{file}" downloaded from Amazon S3.')
+        _glob.append(os.path.join(s3_style_dir, os.path.basename(file)))
+    sizes = [fz(s_idx) for s_idx in _glob]
+    temp = [(n, s) for n, s in zip(_glob, sizes)]
+    with open(os.path.join(bucket_dir, f'{bucket_name}.csv'), 'a',
+              encoding=dev.DEF_CHARSET) as csv_file:
+      log.info('Logging downloaded files into a CSV file.')
+      _file = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
+      _file.writerow(['Files', 'Size on disk'])
+      _file.writerows(temp)
     return list(set(concate_dir))

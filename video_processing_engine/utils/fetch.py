@@ -3,7 +3,7 @@
 import logging
 import os
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Optional, Tuple, Union
 from urllib.parse import unquote, urlsplit
 
 import pytz
@@ -14,9 +14,10 @@ from urllib3.exceptions import RequestError
 
 from video_processing_engine.core.process.concate import concate_videos
 from video_processing_engine.core.process.stats import video_file_extensions
+from video_processing_engine.core.process.trim import trim_by_factor
 from video_processing_engine.utils.boto_wrap import access_limited_files
 from video_processing_engine.utils.common import file_size as fz
-from video_processing_engine.utils.logs import log
+from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.paths import downloads
 from video_processing_engine.vars import dev
 
@@ -250,6 +251,7 @@ def concate_batch_from_s3(access_key: str,
                           access_from: str,
                           access_to: str,
                           log: logging.Logger,
+                          trim_hrs: Optional[Union[float, int]] = None,
                           timestamp_format: str = '%Y-%m-%d %H:%M:%S') -> List:
   """Downloads multiple files from S3 and concatenate them.
 
@@ -273,9 +275,14 @@ def concate_batch_from_s3(access_key: str,
   list_of_dirs = access_limited_files(access_key, secret_key, bucket_name,
                                       access_from, access_to, log,
                                       timestamp_format)
+  sorted(list_of_dirs)
   if len(list_of_dirs) > 0:
     log.info('Concatenating files in their subsequent directories.')
-    return [concate_videos(idx) for idx in list_of_dirs]
+    temp = [concate_videos(idx) for idx in list_of_dirs]
+    if trim_hrs:
+      log.info(f'Trimming concatenated videos in batches of {trim_hrs} hrs.')
+      return [trim_by_factor(c_idx, 'm', trim_hrs) for c_idx in temp]
+    return temp
   else:
     log.warning('0 files downloaded. Returning empty list.')
     return []
@@ -346,6 +353,7 @@ def concate_batch_from_azure(account_name: str,
                              access_from: str,
                              access_to: str,
                              log: logging.Logger,
+                             trim_hrs: Optional[Union[float, int]] = None,
                              timestamp_format: str = '%Y-%m-%d %H:%M:%S'
                              ) -> List:
   """Downloads multiple files from Azure and concatenate them.
@@ -370,9 +378,14 @@ def concate_batch_from_azure(account_name: str,
   list_of_dirs = batch_download_from_azure(account_name, account_key,
                                            container_name, access_from,
                                            access_to, log, timestamp_format)
+  sorted(list_of_dirs)
   if len(list_of_dirs) > 0:
     log.info('Concatenating files in their subsequent directories.')
-    return [concate_videos(idx) for idx in list_of_dirs]
+    temp = [concate_videos(idx) for idx in list_of_dirs]
+    if trim_hrs:
+      log.info(f'Trimming concatenated videos in batches of {trim_hrs} hrs.')
+      return [trim_by_factor(c_idx, 'm', trim_hrs) for c_idx in temp]
+    return temp
   else:
     log.warning('0 files downloaded. Returning empty list.')
     return []
