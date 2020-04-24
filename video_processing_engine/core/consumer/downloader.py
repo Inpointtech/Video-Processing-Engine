@@ -35,8 +35,9 @@ def compute(json_obj: Union[bytes, str]):
   json_data = json.loads(json_obj)
   scheduled = json_data.get('schedule_download', False)
   if scheduled:
-    sleep_interval = datetime.strptime((json_data['start_time']),
-                                        '%Y-%m-%d %H:%M:%S') - now()
+    scheduled_time = f'{json_data["start_date"]} {json_data["start_time"]}'
+    sleep_interval = datetime.strptime(scheduled_time,
+                                       '%Y-%m-%d %H:%M') - now()
     if sleep_interval.seconds <= 0:
       log.error('Scheduled time has passed already.')
       return None
