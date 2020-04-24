@@ -1,11 +1,13 @@
 """Utility for work as a wrapper around Amazon's Boto3 API."""
 
 import csv
+import itertools
 import logging
 import math
 import os
+from collections import defaultdict
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import boto3
 import pytz
@@ -14,8 +16,8 @@ from botocore.utils import calculate_tree_hash
 
 from video_processing_engine.core.process.stats import video_file_extensions
 from video_processing_engine.utils.common import file_size as fz
-from video_processing_engine.utils.paths import downloads
 from video_processing_engine.utils.logs import log as _log
+from video_processing_engine.utils.paths import downloads
 from video_processing_engine.vars import dev
 
 
@@ -478,3 +480,45 @@ def access_limited_files(access_key: str,
       _file.writerow(['Files', 'Size on disk'])
       _file.writerows(temp)
     return list(set(concate_dir))
+
+
+def analyze_storage_consumed(access_key: str,
+                             secret_key: str,
+                             customer_id: Union[int, str],
+                             log: logging.Logger) -> str:
+  """Analyze storage.
+
+  Analyze storage consumed by the customer in GBs.
+
+  Args:
+    access_key: AWS access key.
+    secret_key: AWS saccess_key: str,
+    customer_id: Customer whose storage size needs to be calculated.
+
+  Returns:
+    Storage file size of a customer on S3.
+  """
+  try:
+    s3 = boto3.resource('s3',
+                        aws_access_key_id=access_key,
+                        aws_secret_access_key=secret_key)
+  except (ClientError, NoCredentialsError):
+    log.error('Wrong credentials used to access the AWS account.')
+    return 'Error'
+  else:
+    all_buckets = [bucket.name for bucket in s3.buckets.all()]
+    all_customers = list(map(lambda x: x[2:6].isdigit()
+                             if len(x) == 10 else False,
+                             all_buckets))
+    valid_customers = list(itertools.compress(all_buckets, all_customers))
+    customers = [(idx[2:6], idx) for idx in valid_customers]
+    customer = defaultdict(list)
+    for k, v in customers:
+      customer[k].append(v)
+    size = 0
+    log.info(f'Calculating storage size used by "{customer_id}"')
+    for idx in customer[customer_id]:
+      bucket = s3.Bucket(idx)
+      for obj in bucket.objects.all():
+        size += obj.size
+    return f'{round(size / 1000 / 1024 / 1024, 3)} GB'
