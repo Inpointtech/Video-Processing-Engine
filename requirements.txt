@@ -11,3 +11,5 @@ google-cloud-storage
 azure-storage-blob
 pika
 speedtest-cli
+peewee
+psycopg2
