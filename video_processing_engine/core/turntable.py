@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import shutil
+from pathlib import Path
 from typing import List, Optional, Union
 
 from video_processing_engine.core.capture.recording import trigger_utc_capture
@@ -20,6 +21,7 @@ from video_processing_engine.core.process.trim import (trim_by_factor,
 from video_processing_engine.core.redact.faces import redact_faces
 from video_processing_engine.utils.boto_wrap import (create_s3_bucket,
                                                      upload_to_bucket)
+from video_processing_engine.utils.bs_postgres import create_video_map_obj
 from video_processing_engine.utils.common import now
 from video_processing_engine.utils.generate import (bucket_name, order_name,
                                                     video_type)
@@ -70,6 +72,25 @@ def trimming_callable(json_data: dict,
     trim_upload = trim_by_points(final_file, start_time, end_time,
                                   trim_factor)
   return trim_upload
+
+
+def smash_db(order_id: int, videos: List, urls: List) -> None:
+  """Smashes video information into database."""
+  video_obj = [{'file_name': os.path.basename(k), 'url': v,
+                'video_id': Path(k).stem} for k, v in zip(videos, urls)]
+  write_to_db(order_id, video_obj)
+
+
+def write_to_db(order_id: Union[int, str], video_obj: List[dict]) -> None:
+  """Write data to database."""
+  for idx in video_obj:
+    video_id = idx['video_id']
+    video_url = idx['url']
+    video_file_name = idx['file_name']
+    try:
+      create_video_map_obj(order_id, video_id, video_url, video_file_name)
+    except Exception as error:
+      log.exception(error)
 
 
 def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
@@ -180,6 +201,8 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
       _file = csv.writer(csv_file, delimiter='\n', quoting=csv.QUOTE_MINIMAL)
       _file.writerow(urls)
     temp_list.extend(upload_list)
+    smash_db(json_data.get('order_id', 0), upload_list, urls)
+    log.info('Written values into the database.')
     log.info('Cleaning up the directory.')
     for idx, file in enumerate(temp_list):
       os.remove(file)
