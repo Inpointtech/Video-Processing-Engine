@@ -471,15 +471,18 @@ def access_limited_files(access_key: str,
                          os.path.join(s3_style_dir, os.path.basename(file)))
         log.info(f'File "{file}" downloaded from Amazon S3.')
         _glob.append(os.path.join(s3_style_dir, os.path.basename(file)))
-    sizes = [fz(s_idx) for s_idx in _glob]
-    temp = [(n, s) for n, s in zip(_glob, sizes)]
-    with open(os.path.join(bucket_dir, f'{bucket_name}.csv'), 'a',
-              encoding=dev.DEF_CHARSET) as csv_file:
-      log.info('Logging downloaded files into a CSV file.')
-      _file = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
-      _file.writerow(['Files', 'Size on disk'])
-      _file.writerows(temp)
-    return list(set(concate_dir))
+    if len(concate_dir) > 0:
+      sizes = [fz(s_idx) for s_idx in _glob]
+      temp = [(n, s) for n, s in zip(_glob, sizes)]
+      with open(os.path.join(bucket_dir, f'{bucket_name}.csv'), 'a',
+                encoding=dev.DEF_CHARSET) as csv_file:
+        log.info('Logging downloaded files into a CSV file.')
+        _file = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
+        _file.writerow(['Files', 'Size on disk'])
+        _file.writerows(temp)
+      return list(set(concate_dir))
+    else:
+      return []
 
 
 def analyze_storage_consumed(access_key: str,

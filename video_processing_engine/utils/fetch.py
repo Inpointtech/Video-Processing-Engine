@@ -340,7 +340,6 @@ def batch_download_from_azure(account_name: str,
                f'"{unsupported[1]}", etc. will be skipped.')
     else:
       log.info(f'Files ending with "{unsupported[0]}" will be skipped.')
-
     for blob in blobs_list:
       if (blob.name).endswith(video_file_extensions):
         files_with_timestamp[blob.name] = blob.creation_time
@@ -355,17 +354,20 @@ def batch_download_from_azure(account_name: str,
                             file, os.path.basename(file[:-4]), log,
                             blob_style_dir)
         _glob.append(os.path.join(blob_style_dir, os.path.basename(file)))
-    sizes = [fz(s_idx) for s_idx in _glob]
-    temp = [(n, s) for n, s in zip(_glob, sizes)]
-    with open(os.path.join(container_dir, f'{container_name}.csv'), 'a',
-              encoding=dev.DEF_CHARSET) as csv_file:
-      log.info('Logging downloaded files into a CSV file.')
-      _file = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
-      _file.writerow(['Files', 'Size on disk'])
-      _file.writerows(temp)
-    return list(set(concate_dir))
+    if len(concate_dir) > 0:
+      sizes = [fz(s_idx) for s_idx in _glob]
+      temp = [(n, s) for n, s in zip(_glob, sizes)]
+      with open(os.path.join(container_dir, f'{container_name}.csv'), 'a',
+                encoding=dev.DEF_CHARSET) as csv_file:
+        log.info('Logging downloaded files into a CSV file.')
+        _file = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
+        _file.writerow(['Files', 'Size on disk'])
+        _file.writerows(temp)
+      return list(set(concate_dir))
+    else:
+      return []
   except Exception as e:
-    print(e)
+    log.exception(e)
     log.error('File download from Microsoft Azure failed because of poor '
               'network connectivity.')
     return []
