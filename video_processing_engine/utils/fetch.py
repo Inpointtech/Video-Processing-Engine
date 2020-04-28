@@ -1,5 +1,6 @@
 """Utility to fetch files from Google Drive, Azure and FTP."""
 
+import csv
 import logging
 import os
 from datetime import datetime
@@ -281,7 +282,7 @@ def concate_batch_from_s3(access_key: str,
     temp = [concate_videos(idx) for idx in list_of_dirs]
     if trim_hrs:
       log.info(f'Trimming concatenated videos in batches of {trim_hrs} hrs.')
-      return [trim_by_factor(c_idx, 'm', trim_hrs) for c_idx in temp]
+      return [trim_by_factor(c_idx, 'm', (trim_hrs * 60)) for c_idx in temp]
     return temp
   else:
     log.warning('0 files downloaded. Returning empty list.')
@@ -313,6 +314,7 @@ def batch_download_from_azure(account_name: str,
   Returns:
     List of the directories which hosts the downloaded files.
   """
+  _glob = []
   # You can find the reference code here:
   # https://pypi.org/project/azure-storage-blob/
   try:
@@ -327,6 +329,18 @@ def batch_download_from_azure(account_name: str,
     concate_dir = []
     files_with_timestamp = {}
     blobs_list = container.list_blobs()
+    unsup_list = container.list_blobs()
+    unsupported = [idx.name
+                   for idx in unsup_list
+                   if not (idx.name).endswith(video_file_extensions)]
+    unsupported = list(set(map(lambda x: os.path.splitext(x)[1], unsupported)))
+    unsupported = [idx for idx in unsupported if idx is not '']
+    if len(unsupported) > 1:
+      log.info(f'Unsupported video formats like "{unsupported[0]}", '
+               f'"{unsupported[1]}", etc. will be skipped.')
+    else:
+      log.info(f'Files ending with "{unsupported[0]}" will be skipped.')
+
     for blob in blobs_list:
       if (blob.name).endswith(video_file_extensions):
         files_with_timestamp[blob.name] = blob.creation_time
@@ -340,8 +354,18 @@ def batch_download_from_azure(account_name: str,
         download_from_azure(account_name, account_key, container_name,
                             file, os.path.basename(file[:-4]), log,
                             blob_style_dir)
+        _glob.append(os.path.join(blob_style_dir, os.path.basename(file)))
+    sizes = [fz(s_idx) for s_idx in _glob]
+    temp = [(n, s) for n, s in zip(_glob, sizes)]
+    with open(os.path.join(container_dir, f'{container_name}.csv'), 'a',
+              encoding=dev.DEF_CHARSET) as csv_file:
+      log.info('Logging downloaded files into a CSV file.')
+      _file = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
+      _file.writerow(['Files', 'Size on disk'])
+      _file.writerows(temp)
     return list(set(concate_dir))
-  except Exception:
+  except Exception as e:
+    print(e)
     log.error('File download from Microsoft Azure failed because of poor '
               'network connectivity.')
     return []
@@ -384,7 +408,7 @@ def concate_batch_from_azure(account_name: str,
     temp = [concate_videos(idx) for idx in list_of_dirs]
     if trim_hrs:
       log.info(f'Trimming concatenated videos in batches of {trim_hrs} hrs.')
-      return [trim_by_factor(c_idx, 'm', trim_hrs) for c_idx in temp]
+      return [trim_by_factor(c_idx, 'm', (trim_hrs * 60)) for c_idx in temp]
     return temp
   else:
     log.warning('0 files downloaded. Returning empty list.')
