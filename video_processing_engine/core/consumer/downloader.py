@@ -38,7 +38,7 @@ def compute(json_obj: Union[bytes, str]):
     if scheduled:
       scheduled_time = f'{json_data["start_date"]} {json_data["start_time"]}'
       sleep_interval = datetime_to_utc(scheduled_time,
-                                       json_data["video_timezone"],
+                                       json_data["camera_timezone"],
                                        '%Y-%m-%d %H:%M:%S')
       sleep_interval = datetime.strptime(scheduled_time, '%Y-%m-%d %H:%M')
       sleep_interval -= now()
