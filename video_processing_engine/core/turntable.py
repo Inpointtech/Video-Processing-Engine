@@ -201,7 +201,7 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
       _file = csv.writer(csv_file, delimiter='\n', quoting=csv.QUOTE_MINIMAL)
       _file.writerow(urls)
     temp_list.extend(upload_list)
-    smash_db(json_data.get('order_id', 0), upload_list, urls)
+    smash_db(json_data.get('order_pk', 0), upload_list, urls)
     log.info('Written values into the database.')
     log.info('Cleaning up the directory.')
     for idx, file in enumerate(temp_list):
