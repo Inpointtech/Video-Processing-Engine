@@ -7,6 +7,8 @@ TEXT_EAST_DETECTOR = 'frozen_east_text_detection.pb'
 FRONTAL_HAAR = 'haarcascade_frontalface_default.xml'
 FRONTAL_HAAR_2 = 'haarcascade_frontalface_alt2.xml'
 PROFILE_HAAR = 'haarcascade_profileface.xml'
+TF_PROTOTEXT = 'tf_ssd_deploy.prototxt'
+TF_CAFFEMODEL = 'tf_ssd_deploy.caffemodel'
 
 # Confidence scores
 DETECTED_FACE_CONFIDENCE = 0.7
