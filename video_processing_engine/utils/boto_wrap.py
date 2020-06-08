@@ -5,6 +5,7 @@ import itertools
 import logging
 import math
 import os
+import time
 from collections import defaultdict
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
@@ -15,6 +16,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from botocore.utils import calculate_tree_hash
 
 from video_processing_engine.core.process.stats import video_file_extensions
+from video_processing_engine.utils.common import check_internet
 from video_processing_engine.utils.common import file_size as fz
 from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.utils.paths import downloads
@@ -95,10 +97,18 @@ def upload_to_bucket(access_key: str,
       except FileNotFoundError:
         log.error('File not found.')
         return None
-    s3.upload_file(filename, bucket_name, s3_name,
-                    ExtraArgs={'ACL': 'public-read',
-                               'ContentType': 'video/mp4'})
-    log.info(f'{s3_name} file uploaded on to Amazon S3 bucket.')
+
+    while True:
+      if check_internet():
+        s3.upload_file(filename, bucket_name, s3_name,
+                        ExtraArgs={'ACL': 'public-read',
+                                  'ContentType': 'video/mp4'})
+        log.info(f'{s3_name} file uploaded on to Amazon S3 bucket.')
+        break
+      else:
+        log.info('Internet not available. Retrying upload after 30 secs.')
+        time.sleep(30.0)
+
     return generate_s3_url(bucket_name, s3_name)
 
 
@@ -186,6 +196,7 @@ def access_file(access_key: str,
   else:
     [*status, bucket, file] = check_file(access_key, secret_key,
                                          s3_url, log, bucket_name)
+
     if status[0]:
       s3.download_file(bucket, file, save_file(bucket, file))
     else:
@@ -224,14 +235,17 @@ def access_file_update(access_key: str,
   else:
     [*status, bucket, file] = check_file(access_key, secret_key,
                                          s3_url, log, bucket_name)
+
     if status[0]:
       s3.download_file(bucket,
                        file,
                        os.path.join(downloads, f'{file_name}.mp4'))
       log.info(f'File "{file_name}.mp4" downloaded from Amazon S3 storage.')
+
       if fz(os.path.join(downloads, f'{file_name}.mp4')).endswith('KB'):
         log.error('Unusable file downloaded since file size is in KBs.')
         return None, '[w] Unusable file downloaded.'
+
       return True, os.path.join(downloads, f'{file_name}.mp4')
     else:
       log.error('File download from Amazon S3 failed because of poor network '
@@ -378,6 +392,7 @@ def upload_to_vault(access_key: str,
       except FileNotFoundError:
         log.error('File not found.')
         return None
+
     upload_chunk = 2 ** 25
     mp_upload = glacier.initiate_multipart_upload
     mp_part = glacier.upload_multipart_part
@@ -385,24 +400,29 @@ def upload_to_vault(access_key: str,
     multipart_archive_upload = mp_upload(vaultName=vault_name,
                                          archiveDescription=file_name,
                                          partSize=str(upload_chunk))
+
     file_size = os.path.getsize(file_name)
     multiple_parts = math.ceil(file_size / upload_chunk)
+
     with open(file_name, 'rb') as upload_archive:
       for idx in range(multiple_parts):
         min_size = idx * upload_chunk
         max_size = min_size + upload_chunk - 1
+
         if max_size > file_size:
           max_size = (file_size - min_size) + min_size - 1
         file_part = upload_archive.read(upload_chunk)
-        upload_part = mp_part(vaultName=vault_name,
-                              uploadId=multipart_archive_upload['uploadId'],
-                              range=f'bytes {min_size}-{max_size}/{file_size}',
-                              body=file_part)
+        mp_part(vaultName=vault_name,
+                uploadId=multipart_archive_upload['uploadId'],
+                range=f'bytes {min_size}-{max_size}/{file_size}',
+                body=file_part)
+
     checksum = calculate_tree_hash(open(file_name, 'rb'))
     complete_upload = cp_upload(vaultName=vault_name,
                                 uploadId=multipart_archive_upload['uploadId'],
                                 archiveSize=str(file_size),
                                 checksum=checksum)
+
     log.info(f'"{file_name}" file archived on AWS S3 Glacier.')
     return complete_upload
 
@@ -446,21 +466,26 @@ def access_limited_files(access_key: str,
     bucket_dir = os.path.join(downloads, bucket_name)
     concate_dir = []
     files_with_timestamp = {}
+
     all_files = s3.list_objects_v2(Bucket=bucket_name)
     unsupported = [idx['Key']
                    for idx in all_files['Contents']
                    if not idx['Key'].endswith(video_file_extensions)]
     unsupported = list(set(map(lambda x: os.path.splitext(x)[1], unsupported)))
     unsupported = [idx for idx in unsupported if idx is not '']
+
     if len(unsupported) > 1:
       log.info(f'Unsupported video formats like "{unsupported[0]}", '
                f'"{unsupported[1]}", etc. will be skipped.')
     else:
       log.info(f'Files ending with "{unsupported[0]}" will be skipped.')
+
     for files in all_files['Contents']:
       if files['Key'].endswith(video_file_extensions):
         files_with_timestamp[files['Key']] = files['LastModified']
+
     sorted_files = sorted(files_with_timestamp.items(), key=lambda xa: xa[1])
+
     for file, timestamp in sorted_files:
       if timestamp > limit_from and timestamp < limit_till:
         s3_style_dir = os.path.join(bucket_dir, os.path.dirname(file))
@@ -471,6 +496,7 @@ def access_limited_files(access_key: str,
                          os.path.join(s3_style_dir, os.path.basename(file)))
         log.info(f'File "{file}" downloaded from Amazon S3.')
         _glob.append(os.path.join(s3_style_dir, os.path.basename(file)))
+
     if len(concate_dir) > 0:
       sizes = [fz(s_idx) for s_idx in _glob]
       temp = [(n, s) for n, s in zip(_glob, sizes)]
@@ -481,6 +507,7 @@ def access_limited_files(access_key: str,
         _file.writerow(['Files', 'Size on disk'])
         _file.writerows(temp)
       return list(set(concate_dir))
+
     else:
       return []
 
@@ -516,10 +543,13 @@ def analyze_storage_consumed(access_key: str,
     valid_customers = list(itertools.compress(all_buckets, all_customers))
     customers = [(idx[2:6], idx) for idx in valid_customers]
     customer = defaultdict(list)
+
     for k, v in customers:
       customer[k].append(v)
+
     size = 0
     log.info(f'Calculating storage size used by "{customer_id}"')
+
     for idx in customer[customer_id]:
       bucket = s3.Bucket(idx)
       for obj in bucket.objects.all():
