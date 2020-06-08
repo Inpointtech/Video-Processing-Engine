@@ -13,7 +13,7 @@ from video_processing_engine.utils.logs import log as _log
 from video_processing_engine.vars import dev
 
 
-def check_internet(timeout: Optional[Union[float, int]] = 10.0,
+def check_internet(timeout: Union[float, int] = 10.0,
                    log: logging.Logger = None) -> bool:
   """Check the internet connectivity."""
   # You can find the reference code here:
