@@ -99,8 +99,9 @@ def spin(json_obj: Union[bytes, str], log: logging.Logger) -> None:
     start = now()
     upload_list, temp_list, trim_upload, urls = [], [], [], []
     original_file = None
-    log.info('Video processing engine started spinning.')
+    # log.info('Video processing engine started spinning.')
     json_data = json.loads(json_obj)
+    log.info(f"Video processing engine started spinning for camera {json_data.get('camera_id', 0)}.")
     log.info('Parsed consumer JSON request.')
     bucket = bucket_name(json_data.get('country_code', 'xa'),
                          json_data.get('customer_id', 0),
