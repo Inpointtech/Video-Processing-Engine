@@ -8,7 +8,7 @@ from typing import List, Optional, Union
 from moviepy.editor import VideoFileClip as vfc
 
 from video_processing_engine.core.process.stats import duration
-from video_processing_engine.utils.common import calculate_duration
+from video_processing_engine.utils.common import calculate_duration, now
 from video_processing_engine.utils.local import (filename, quick_rename,
                                                  temporary_copy)
 
@@ -40,7 +40,7 @@ def trim_video(file: str,
 def trim_num_parts(file: str,
                    num_parts: int,
                    equal_distribution: bool = False,
-                   clip_length: Union[float, int] = 30,
+                   clip_length: Union[float, int, str] = 30,
                    random_start: bool = True,
                    random_sequence: bool = True) -> Optional[List]:
   """Trim video in number of equal parts.
@@ -60,6 +60,8 @@ def trim_num_parts(file: str,
     return_list: Boolean (default: True) value to return list of all the
                  trimmed files.
   """
+  num_parts = int(num_parts)
+  clip_length = int(clip_length)
   split_part = duration(file) / num_parts
   start = 0
   # Start splitting the videos into 'num_parts' equal parts.
@@ -86,7 +88,7 @@ def trim_num_parts(file: str,
 
 
 def trim_sample_section(file: str,
-                        sampling_rate: float) -> str:
+                        sampling_rate: Union[float, int, str]) -> str:
   """Trim a sample portion of the video as per the sampling rate.
   Trims a random sample portion of the video as per the sampling rate.
   Args:
@@ -103,17 +105,19 @@ def trim_sample_section(file: str,
   Returns:
     Path of the temporary duplicate file created.
   """
-  clip_length = (duration(file) * sampling_rate) // 100
-  start = random.randint(1, int(duration(file)))
-  end = start + clip_length
+  sampling_rate = float(sampling_rate)
   temp = temporary_copy(file)
+
+  clip_length = int((duration(file) * sampling_rate * 0.01))
+  start = random.randint(1, int(duration(file) - clip_length))
+  end = start + clip_length
   trim_video(temp, file, start, end)
   return temp
 
 
 def trim_by_factor(file: str,
                    factor: str = 's',
-                   clip_length: Union[float, int] = 30,
+                   clip_length: Union[float, int, str] = 30,
                    last_clip: bool = True) -> List:
   """Trims the video by deciding factor.
   Trims the video as per the deciding factor i.e. trim by mins OR trim
@@ -133,6 +137,7 @@ def trim_by_factor(file: str,
             compression technique on the trimmed videos.
     threads: Number of threads (default: 15) to be used for trimming.
   """
+  clip_length = int(clip_length)
   total_length = duration(file)
   video_list = []
   idx = 1
@@ -190,12 +195,17 @@ def trim_by_points(file: str,
                    factor: str = 's') -> str:
   """Trim by starting minute OR starting seconds."""
   idx = 1
+  start_time = int(start_time)
+  end_time = int(end_time)
+
   _factor = 1 if factor == 's' else 60
   total_limit = int(duration(file) / _factor)
+
   if factor == 'p':
     start_time = int((start_time / 100) * total_limit)
     end_time = int((end_time / 100) * total_limit)
     total_limit = 100
+
   if end_time < start_time:
     raise Exception('Ending time is less than starting time.')
   else:
