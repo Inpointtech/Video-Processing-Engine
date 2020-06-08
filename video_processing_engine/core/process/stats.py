@@ -8,7 +8,7 @@ import cv2
 import speedtest
 from moviepy.editor import VideoFileClip as vfc
 
-from video_processing_engine.utils.common import file_size, seconds_to_datetime
+from video_processing_engine.utils.common import check_internet, file_size, seconds_to_datetime
 from video_processing_engine.utils.hasher import h_extension
 
 video_file_extensions = ('.3gp', '.mp4', '.avi', '.webm', '.divx', '.f4v',
@@ -51,8 +51,7 @@ def fps(file: str) -> Union[float, int]:
   return cv2.VideoCapture(file).get(cv2.CAP_PROP_FPS)
 
 
-def check_usable_length(file: str,
-                        num_clips: int = 24,
+def check_usable_length(file: str, num_clips: int = 24,
                         minimum_length: int = 30) -> bool:
   """Returns boolean value after checking usuable video length."""
   return True if duration(file) >= num_clips * minimum_length else False
@@ -79,18 +78,25 @@ def usuable_difference(video_length: Union[float, int],
   return True if video_length >= num_clips * minimum_length else False
 
 
-def minimum_sampling_rate(num_clips: int = 24,
-                          minimum_length: int = 30) -> int:
+def minimum_sampling_rate(num_clips: int = 24, minimum_length: int = 30) -> int:
   """Return minimum sampling rate required."""
   return num_clips * minimum_length
 
 
-def completion_time_calculator(file: str,
-                               sampling_rate: float,
-                               factor: str = 's'):
+def ctc(file: str,
+        sampling_rate: Union[float, int, str],
+        factor: str = 's') -> str:
   """Returns an approximate* time of completion of the activity."""
-  temp_etc = median((float(duration(file)), os.stat(file).st_size)) / 100000
-  trimming_bias = temp_etc + (temp_etc * 1.35298) + (sampling_rate * 0.125)
-  upload_speed = speedtest.Speedtest().upload() / 1000000
-  total_etc = (temp_etc / upload_speed) + trimming_bias
+  sampling_rate = float(sampling_rate)
+  length = float(duration(file))
+
+  temp_etc = median((length, os.stat(file).st_size)) / 100000
+  bias = temp_etc + (sampling_rate * length * 0.05)
+
+  if check_internet():
+    upload_speed = speedtest.Speedtest().upload() / 1000000
+  else:
+    upload_speed = 0.00001
+
+  total_etc = (temp_etc / upload_speed) + bias
   return seconds_to_datetime(int(total_etc))
