@@ -37,6 +37,7 @@ def rescale(frame: np.ndarray,
   # No rescaling will be done in that case.
   if width is None and height is None:
     return frame
+
   if width and height:
     dimensions = (width, height)
   elif width is None:
@@ -45,6 +46,7 @@ def rescale(frame: np.ndarray,
   else:
     ratio = width / float(frame_width)
     dimensions = (width, int(frame_height * ratio))
+
   return cv2.resize(frame, dimensions, interpolation=interpolation)
 
 
@@ -102,8 +104,10 @@ def positional_feed(frame: np.ndarray,
     pos_y: Y-position of the displayed feed.
   """
   cv2.namedWindow(name)
+
   if pos_x == None or pos_y == None:
     pos_x = pos_y = 0
+
   cv2.moveWindow(name, pos_x, pos_y)
   cv2.imshow(name, frame)
 
@@ -131,6 +135,7 @@ def draw_centroid(frame: np.ndarray,
                               cv2.RETR_EXTERNAL,
                               cv2.CHAIN_APPROX_SIMPLE)
   contours = imutils.grab_contours(contours)
+
   for contour in contours:
     moment = cv2.moments(contour)
     x = int(moment['m10'] / moment['m00']) if moment['m00'] > 0 else 0
@@ -141,13 +146,14 @@ def draw_centroid(frame: np.ndarray,
 
 def camera_live(camera_address: str,
                 camera_port: Union[int, str] = 554,
-                timeout: Optional[Union[float, int]] = 10.0,
+                timeout: Union[float, int, str] = 10.0,
                 log: logging.Logger = None) -> bool:
   """Check if any camera connectivity is available."""
   # You can find the reference code here:
   # https://gist.github.com/yasinkuyu/aa505c1f4bbb4016281d7167b8fa2fc2
   log = _log(__file__) if log is None else log
   try:
+    timeout = float(timeout)
     camera_port = int(camera_port)
     socket.create_connection((camera_address, camera_port), timeout = timeout)
     log.info('Camera connected to the network.')
