@@ -1,11 +1,13 @@
 """Utility for simplifying file operations."""
 
+import errno
 import os
 import shutil
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Union
 
 from video_processing_engine.utils.generate import hash_aa
+from video_processing_engine.utils.paths import live
 
 
 def create_dir_with_same_filename(file: str) -> str:
@@ -38,6 +40,7 @@ def create_copy(file: str,
   """
   if copy_path is None:
     copy_path = create_dir_with_same_filename(file)
+
   if copy_name is None:
     copy_name = os.path.basename(file)
   return shutil.copy(file, os.path.join(copy_path, copy_name))
@@ -80,6 +83,18 @@ def filename(file: str, video_num: int) -> str:
 def quick_rename(file: str, force: bool = True) -> Tuple[str, str]:
   """Renames file in runtime and returns the original file name."""
   _temp = temporary_rename(file)
+
   if force:
     os.rename(file, _temp)
   return file, _temp
+
+
+def create_chibi_dir(camera_name: Union[int, str], path: str = live) -> str:
+  """Creates a directory for continuous recording for Phase - I."""
+  try:
+    path = os.path.join(path, f'live_{camera_name}')
+    os.mkdir(path)
+  except OSError as _error:
+    if _error.errno != errno.EEXIST:
+      raise
+  return path
